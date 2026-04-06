@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Unregelmäßige Verben - Vokabelspiel MA</title>
+<style>
+body { font-family:'Segoe UI',sans-serif; text-align:center; margin:0; padding:0; transition: background 0.5s;}
+h1 { margin-top:20px; transition: color 0.5s;}
+#themeSelector { margin:10px; padding:5px; font-size:16px;}
+#status { display:flex; justify-content:center; gap:20px; margin:20px; transition: background 0.5s; flex-wrap:wrap;}
+
+/* --- Boxen zentriert --- */
+.box {
+display: flex;
+justify-content: center;
+align-items: center;
+text-align: center;
+padding:10px 20px;
+border-radius:12px;
+font-weight:bold;
+font-size:18px;
+box-shadow:0 4px 8px rgba(0,0,0,0.2);
+transition:all 0.5s;
+}
+
+#wort {
+  font-size:32px;
+  margin:20px;
+  font-weight:bold;
+  text-align:center;
+
+  display: block;   /* 👉 KEIN flex mehr */
+}
+/* --- Antwortbuttons 2x2, größere Größe, zentriert --- */
+#antworten {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: nowrap;   /* 👉 bricht um, falls nötig */
+  margin: 20px auto;
+}
+
+#antworten button {
+  min-width: 150px;
+  padding: 15px 20px;
+  font-size: 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+
+#antworten button:hover { transform:scale(1.05); }
+
+#feedback { font-size:24px; margin-top:15px; height:30px; transition:all 0.3s;}
+#timerBarContainer, #progressContainer { width:60%; height:20px; border-radius:10px; margin:10px auto; overflow:hidden; background:#ccc; transition:all 0.5s;}
+#timerBar, #progressBar { height:100%; width:100%; transition: width 0.1s linear;}
+#leben { font-size:24px; margin:10px; }
+
+/* Top 3 Farben */
+.gold {
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.silver {
+  color: #C0C0C0;
+  font-weight: bold;
+}
+
+.bronze {
+  color: #cd7f32;
+  font-weight: bold;
+}
+
+/* Dein eigener Score */
+.me {
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* --- NEU: Layout nebeneinander --- */
+#gameWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0px;
+  margin-top: 20px;
+position: relative; 
+}
+
+#gameArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+}
+
+#highscoresContainer {
+  position: fixed;   /* 👈 statt absolute */
+  right: 20px;
+  top: 40px;         /* 👈 frei einstellbar */
+  z-index: 999;
+}
+
+.highscoreBox {
+  position: sticky;
+  top: 20px;   /* 👈 deutlich weiter oben */
+}
+
+/* --- Wort-Highlight sauber zentriert --- */
+.wort-box {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+
+  padding: 15px 25px;
+  border-radius: 15px;
+
+  font-size: 36px;   /* 👉 kleiner */
+  font-weight: bold;
+
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+
+  display: block;            /* 👉 GANZE ZEILE */
+  width: fit-content;        /* 👉 Größe nur so groß wie Inhalt */
+  margin: 0 auto 20px auto;  /* 👉 perfekt zentriert */
+
+  letter-spacing: 1px;
+}
+
+
+/* --- ZENTRIERUNG DES SPIELS --- */
+#mainCenter {
+  max-width: 900px;     /* 👉 schöne Spielbreite */
+  margin: 0 auto;       /* 👉 horizontal zentriert */
+  text-align: center;
+}
+#timerBarContainer,
+#progressContainer {
+  display: none;
+}
+/* --- Artikel-Farben --- */
+.btn-der {
+  background: #448aff;   /* blau */
+  color: white;
+}
+
+.btn-die {
+  background: #f44336;   /* rot */
+  color: white;
+}
+
+.btn-das {
+  background: #ffeb3b;   /* gelb */
+  color: black;
+}
+
+.btn-special {
+  background: #9e9e9e;   /* grau */
+  color: white;
+}
+
+#footer {
+  position: fixed;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* 👉 JETZT AUSSERHALB */
+.box span {
+  margin-left: 8px;
+}
+
+.box {
+  gap: 8px;
+}
+
+/* --- STARTSCREEN VERBESSERN --- */
+#startScreen {
+  margin-top: 60px;
+}
+
+#startScreen label {
+  display: block;
+  font-size: 22px;
+  margin: 20px 0 10px 0;
+}
+
+#startScreen input,
+#startScreen select {
+  font-size: 20px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  margin-top: 8px;
+  width: 260px;
+}
+
+#startScreen button {
+  margin-top: 30px;
+  font-size: 24px;
+  padding: 15px 30px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #4caf50;
+  color: white;
+  border: none;
+  transition: 0.3s;
+}
+
+#startScreen button:hover {
+  transform: scale(1.05);
+}
+#startScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* --- Highscore einzelne Boxen --- */
+.highscore-item {
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 12px;
+
+  text-align: center;
+
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(6px);
+
+  transition: 0.3s;
+  border: 2px solid black;
+
+}
+
+.highscore-item:hover {
+  transform: scale(1.05);
+}
+
+/* Top 3 stärker hervorheben */
+.highscore-item.gold {
+  background: linear-gradient(135deg, #FFD700, #ffb300);
+  color: #000;
+}
+
+.highscore-item.silver {
+  background: linear-gradient(135deg, #C0C0C0, #9e9e9e);
+  color: #000;
+}
+
+.highscore-item.bronze {
+  background: linear-gradient(135deg, #cd7f32, #a05a2c);
+  color: #fff;
+}
+.highscore-item {
+  text-align: center;   /* 👈 zentriert Text */
+}
+.highscore-item strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 18px;
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(80px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.highscoreBox {
+  animation: slideInRight 0.6s ease;
+}
+.highscore-item.me {
+  border: 2px solid #00e5ff;
+  box-shadow: 0 0 15px #00e5ff;
+}
+/* --- Medaillen als Kreise --- */
+.medal-circle {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+  background: white;
+  color: black;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+
+  justify-self: start; /* 👈 bleibt drin */
+}
+/* --- Highscore Zeile korrekt ausrichten --- */
+.highscore-row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+}
+
+.highscore-name {
+  text-align: left;
+}
+.highscore-item {
+  text-align: left;
+}
+.highscore-points {
+  text-align: center;
+  width: 100%;
+  font-weight: bold;
+  margin-top: 6px;
+}
+.highscore-name {
+  white-space: nowrap;
+}
+#pauseBtn {
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  background: #2196f3;
+  color: white;
+  border: none;
+
+  transition: 0.3s;
+
+  display: none;
+}
+
+
+#overlay {
+  pointer-events: none;
+}
+#status {
+  align-items: center;
+}
+#pauseBtn {
+  margin-left: 10px;
+}
+
+
+
+
+
+
+
+
+.highscore-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 12px;   /* 👉 Abstand nach unten */
+ text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.highscore-entry {
+  margin: 4px 0;         /* 👉 Abstand zwischen Einträgen */
+  padding: 2px 0;
+}
+
+.highscoreBox {
+  text-align: left;
+  max-width: 240px;
+  padding: 15px;
+  border-radius: 16px;
+
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+  margin-top: 0;
+}
+.night .highscoreBox {
+  background: rgba(50,50,100,0.25);
+}
+
+
+/* --- Popups --- */
+#top10Popup {
+display:none;
+position:fixed;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#ffeb3b;
+color:#000;
+padding:20px;
+border-radius:15px;
+font-size:24px;
+font-weight:bold;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+z-index:10000;
+text-align:center;
+}
+#timeOverPopup, #overlay {
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+padding:30px 50px;
+border-radius:20px;
+font-size:28px;
+font-weight:bold;
+box-shadow:0 0 30px rgba(0,0,0,0.7);
+z-index:10000;
+text-align:center;
+}
+#timeOverPopup { background:#ff4444; color:#fff; }
+#overlay { top:0; left:0; transform:none; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9000; }
+
+.correct-answer-highlight {
+color:#00ff00;
+font-weight:bold;
+font-size:32px;
+}
+.error-icon {
+  width: 70px;
+  height: 70px;
+  background: white;
+  color: red;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  margin: 0 auto 10px auto;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
+
+/* --- Tag/Nacht Styles --- */
+.day { 
+  background: #e0f7fa;   /* 👉 nur EINE Farbe */
+  color:#004d40;
+}.night { background:#1a1a2e; color:#f0f0f0;}
+.day .box { background:#ffffffaa; color:#004d40;}
+.night .box { background:#333366; color:#f0f0f0;}
+
+.day #antworten button:not(.btn-der):not(.btn-die):not(.btn-das):not(.btn-special) {
+  background:#80cbc4;
+  color:#004d40;
+}
+
+.night #antworten button:not(.btn-der):not(.btn-die):not(.btn-das):not(.btn-special) {
+  background:#4444aa;
+  color:#fff;
+}
+
+.day #timerBar { background:#00796b; }
+.night #timerBar { background:#448aff; }
+.day #progressBar.level2 { background:#4caf50; }
+.night #progressBar.level2 { background:#2e7d32; }
+/* Highscore Tag/Nacht */
+.day .highscoreBox { background:#f0f0f0; color:#004d40; }
+.night .highscoreBox { background:#333366; color:#fff; }
+
+/* Farbige Buttons */
+.green { background:#4caf50; color:#fff;}
+.yellow { background:#ffeb3b; color:#000;}
+.red { background:#f44336; color:#fff;}
+.correct-answer { color: #00ff00; font-weight:bold; }
+
+.deutsches-wort {
+  color: orange;
+  font-size: 44px;      /* 👉 größer */
+  font-weight: bold;
+ width: 100%;
+  margin-bottom: 20px;  /* 👉 mehr Abstand nach unten */
+}
+
+/* --- ✅ NEU: LOGO oben links --- */
+#logo {
+position: fixed;
+top: 10px;
+left: 10px;
+width: 360px;
+height: auto;
+z-index: 1000;
+opacity: 0.9;
+transition: all 0.3s;
+}
+#logo:hover {
+transform: scale(1.05);
+opacity: 1;
+}
+.night #logo {
+filter: brightness(1.2);
+} </style>
+
+</head>
+<body class="day">
+
+<!-- ✅ NEU: Logo -->
+
+<img src="" id="logo">
+<h1 id="gameTitle">Vokabelspiel MA 🎮</h1>
+
+<select id="themeSelector">
+<option value="day">Tagesmodus</option>
+<option value="night">Nachtmodus</option>
+</select>
+
+<div id="startScreen">
+<label>Dein Name: <input id="playerName" placeholder="Name eingeben"></label><br>
+<label>Gesamtzeit wählen:
+<select id="timeSelector">
+<option value="60">1 Minute</option>
+<option value="180">3 Minuten</option>
+<option value="300">5 Minuten</option>
+</select>
+</label><br>
+<button id="startBtn">Spiel starten</button>
+</div>
+
+<div id="gameWrapper">
+
+  <div id="gameArea">
+
+<div id="status" style="display:none;">
+
+  <div class="box">
+    <span>Punkte:</span>
+    <span id="punkte">0</span>
+  </div>
+
+  <div class="box">
+    <span>Gesamtzeit:</span>
+    <span id="gesamtzeit">0</span>
+    <span>&nbsp;s</span>
+  </div>
+
+  <div id="leben" class="box">❤️❤️❤️</div>
+
+  <!-- 🔥 HIER rein -->
+  <button id="pauseBtn">⏸</button>
+
+</div>
+
+    <!-- ✅ Pause Button RICHTIG -->
+    <button id="pauseBtn">⏸ Pause</button>
+
+    <div id="wort"></div>
+
+    <div id="timerBarContainer">
+      <div id="timerBar"></div>
+    </div>
+
+    <div id="progressContainer">
+      <div id="progressBar" class="level2"></div>
+    </div>
+
+    <div id="antworten"></div>
+    <div id="feedback"></div>
+
+  </div>
+
+  <div id="highscoresContainer">
+    <div id="highscoreList2" class="highscoreBox"></div>
+  </div>
+
+</div>
+
+
+</div>
+
+<div id="top10Popup"></div>
+<div id="overlay"></div>
+<div id="timeOverPopup"></div>
+
+<audio id="richtig" src="https://freesound.org/data/previews/320/320654_5260870-lq.mp3"></audio> <audio id="falsch" src="https://freesound.org/data/previews/82/82921_1022653-lq.mp3"></audio>
+
+<script>
+// --- Theme ---
+document.getElementById("pauseBtn").onclick = function(){
+
+  if(!isPaused){
+    // ⏸ Pause
+    isPaused = true;
+
+    clearInterval(timerID);
+
+    punkte = Math.max(0, punkte - 1);
+    document.getElementById("punkte").innerText = punkte;
+
+    document.getElementById("feedback").innerText = "⏸ Pause (-1 Punkt)";
+
+    document.getElementById("overlay").style.display = "block"; // 🌑 NEU
+
+    this.innerText = "▶";
+
+  } else {
+    // ▶ Weiter
+    isPaused = false;
+
+    startTimer();
+
+    document.getElementById("feedback").innerText = "";
+
+    document.getElementById("overlay").style.display = "none"; // 🌑 NEU
+
+    this.innerText = "⏸";
+  }
+
+};
+document.getElementById("themeSelector").addEventListener("change", e=>{document.body.className=e.target.value;});
+
+// --- Shuffle ---
+function shuffleArray(array){ for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]];}}
+
+// --- Verben ---
+let level2=[
+["abrir","öffnen"],["amar","lieben"],["aprender","lernen"],["ayudar","helfen"],
+["beber","trinken"],["buscar","suchen"],["cerrar","schließen"],["cocinar","kochen"],
+["comer","essen"],["conocer","kennen"],["correr","laufen/rennen"],["creer","glauben"],
+["dar","geben"],["decir","sagen"],["empezar/comenzar","anfangen"],
+["encontrar","finden"],["entender","verstehen"],["escribir","schreiben"],
+["escuchar/oír","hören"],["esperar","warten"],["hablar","sprechen"],
+["hacer","machen"],["ir/caminar","gehen"],["jugar/tocar","spielen"],
+["leer","lesen"],["llamar","heißen"],["necesitar","brauchen"],
+["pagar","bezahlen"],["pedir","bestellen"],["pensar","denken"],
+["poder","können"],["poner","setzen/legen/stellen"],["preferir","bevorzugen"],
+["preguntar","fragen"],["quedar","bleiben/verabreden"],
+["querer","wollen/wünschen"],["responder","antworten"],["saber","wissen"],
+["salir","ausgehen"],["sentir","fühlen"],["ser/estar","sein"],
+["tener","haben"],["tomar/coger","nehmen"],["trabajar","arbeiten"],
+["usar","benutzen"],["venir/llegar","kommen"],["ver","sehen"],
+["viajar","reisen"],["vivir","leben/wohnen"],["volver","zurückkommen"]
+];
+
+// --- Spielvariablen ---
+let punkte=0, aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
+let isPaused = false;
+let gesamtSpielZeit=60, gesamtSekunden=0, gesamtTimerID;
+let gesamtTimerLaeuft = false;
+
+// --- Highscore ---
+function getHighscores(){ return JSON.parse(localStorage.getItem("vokabelHighscores_level2")||"[]"); }
+function saveHighscores(hs){ localStorage.setItem("vokabelHighscores_level2",JSON.stringify(hs)); }
+
+
+function updateAllHighscores(){
+  let hs = getHighscores();
+  hs.sort((a,b)=>b.punkte-a.punkte);
+
+  let html = "<div class='highscore-title'>🏆 Highscore</div>";
+
+  hs.slice(0,10).forEach((e,i)=>{
+    let klasse = "";
+
+    if(i === 0) klasse = "gold";
+    else if(i === 1) klasse = "silver";
+    else if(i === 2) klasse = "bronze";
+
+    if(e.name === playerName) klasse += " me";
+
+    let medal = ["🥇","🥈","🥉"][i] || "";
+
+    let medalHTML = "";
+    if(i < 3){
+      medalHTML = `<div class="medal-circle">${medal}</div>`;
+    }
+
+    html += `
+      <div class="highscore-item ${klasse}">
+        
+        <div class="highscore-row">
+          ${medalHTML}
+          <div class="highscore-name">${i+1}. ${e.name}</div>
+        </div>
+
+        <div class="highscore-points">${e.punkte} Punkte</div>
+
+      </div>
+    `;
+  });
+
+  document.getElementById("highscoreList2").innerHTML = html;
+}
+
+// --- Popups ---
+function showTop10Popup(name,punkte,rang){
+  const popup=document.getElementById("top10Popup");
+  popup.innerHTML=`🎉 Glückwunsch ${name}! <br> Rang ${rang} in den Top 10! <br> Punkte: ${punkte}`;
+  popup.style.display="block";
+  setTimeout(()=>{popup.style.display="none";},4000);
+}
+
+// --- Start ---
+document.getElementById("startBtn").onclick=function(){
+document.getElementById("pauseBtn").style.display = "inline-block";
+document.getElementById("gameTitle").innerText = "Vokabelspiel MA 🎮";
+document.getElementById("highscoresContainer").style.display = "block";
+document.getElementById("timerBarContainer").style.display = "block";
+document.getElementById("progressContainer").style.display = "block";
+
+  playerName=document.getElementById("playerName").value.trim()||"Spieler";
+  gesamtSpielZeit=parseInt(document.getElementById("timeSelector").value);
+  shuffleArray(level2);
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("status").style.display="flex";
+  updateLebenAnzeige(); updateAllHighscores(); startGesamtTimer(); starteFrage();
+}
+
+// --- Timer ---
+function updateTimerBar(){document.getElementById("timerBar").style.width=(zeit/10*100)+"%";}
+
+
+function startTimer(){ 
+  if(isPaused) return;
+
+  clearInterval(timerID);
+
+  timerID=setInterval(()=>{
+    zeit-=0.1;
+    if(zeit<0) zeit=0;
+    updateTimerBar();
+
+    if(zeit===0){ 
+      clearInterval(timerID); 
+      zeitAbgelaufen(); 
+    }
+  },100);
+}
+
+// --- Popups und Antworten ---
+
+
+function zeitAbgelaufen(){
+  const w = level2[aktuelleFrage];
+  const correct = w[1];   // ✅ richtiger Artikel!
+
+
+
+  document.getElementById("overlay").style.display="block";
+  const popup=document.getElementById("timeOverPopup");
+  popup.innerHTML=`⏰ Zeit abgelaufen!<br>Richtige Antwort: <span class="correct-answer-highlight">${correct}</span>`;
+  popup.style.display="block";
+ setTimeout(()=>{
+  document.getElementById("overlay").style.display="none";
+  popup.style.display="none";
+
+  // ❗ KEIN zweites Popup mehr
+  leben--;
+  updateLebenAnzeige();
+
+  if(leben <= 0){
+    spielZurücksetzen();
+  } else {
+    nächsteFrage();
+  }
+
+},4000);
+}
+
+document.getElementById("richtig").volume=0.3;
+document.getElementById("falsch").volume=0.3;
+
+function updateLebenAnzeige(){ let str=""; for(let i=0;i<leben;i++) str+="❤️"; document.getElementById("leben").innerHTML=str; }
+
+function startGesamtTimer(){ 
+
+  if(gesamtTimerLaeuft) return; // ❗ verhindert doppelten Timer
+
+  gesamtTimerLaeuft = true;
+
+  gesamtTimerID = setInterval(()=>{
+    if(isPaused) return; // ❗ friert Zeit ein
+
+    gesamtSekunden++; 
+    document.getElementById("gesamtzeit").innerText = gesamtSekunden;
+
+    if(gesamtSekunden >= gesamtSpielZeit){ 
+      clearInterval(gesamtTimerID);
+      gesamtTimerLaeuft = false;
+
+      document.getElementById("overlay").style.display="block";
+      const popup=document.getElementById("timeOverPopup");
+      popup.innerHTML=`⏰ Gesamtzeit abgelaufen!<br>Punkte: ${punkte}`;
+      popup.style.display="block";
+
+      setTimeout(()=>{
+        document.getElementById("overlay").style.display="none";
+        popup.style.display="none";
+
+        addHighscore(playerName,punkte);
+
+        punkte=0; 
+        aktuelleFrage=0; 
+        leben=3; 
+        gesamtSekunden = 0;
+
+        document.getElementById("punkte").innerText=0; 
+        document.getElementById("gesamtzeit").innerText=0; 
+
+        updateLebenAnzeige(); 
+
+        startGesamtTimer(); 
+        starteFrage();
+
+      },4000);
+    }
+
+  },1000);
+}
+
+// --- Highscore Funktionen ---
+function addHighscore(name,punkte){
+  let hs=getHighscores();
+  hs.push({name,punkte}); hs.sort((a,b)=>b.punkte-a.punkte);
+  if(hs.length>10) hs=hs.slice(0,10);
+  saveHighscores(hs); updateAllHighscores();
+  let rang=hs.findIndex(e=>e.name===name && e.punkte===punkte)+1;
+  if(rang>0 && rang<=10) showTop10Popup(name,punkte,rang);
+}
+
+// --- Spiel zurücksetzen ---
+function spielZurücksetzen(){ 
+  clearInterval(gesamtTimerID);
+
+
+  alert("Keine Leben mehr! Spiel wird zurückgesetzt."); 
+  addHighscore(playerName,punkte); 
+
+  punkte=0; 
+  aktuelleFrage=0; 
+  leben=3; 
+
+  document.getElementById("punkte").innerText=punkte; 
+  document.getElementById("gesamtzeit").innerText=0; 
+
+  updateLebenAnzeige(); 
+  startGesamtTimer(); 
+  starteFrage(); 
+}
+
+// --- Frage ---
+function starteFrage(){
+  clearInterval(timerID);
+
+  zeit = 10; // ✅ NEU
+
+  document.getElementById("feedback").innerText="";
+  document.getElementById("antworten").innerHTML="";
+  updateProgress();
+
+  if(aktuelleFrage>=level2.length) aktuelleFrage=0;
+
+  const w = level2[aktuelleFrage];
+
+  // 👉 Spanisches Verb anzeigen
+  document.getElementById("wort").innerHTML = `
+    <div class="wort-box">${w[0]}</div>
+  `;
+
+  // 👉 Richtige + falsche Antworten erzeugen
+  let antworten = [w[1]];
+
+  while(antworten.length < 4){
+    let random = level2[Math.floor(Math.random()*level2.length)][1];
+    if(!antworten.includes(random)) antworten.push(random);
+  }
+
+  shuffleArray(antworten);
+
+  antworten.forEach(a=>{
+    const btn = document.createElement("button");
+    btn.innerText = a;
+
+    btn.onclick = ()=>checkAntwort(a, w[1]);
+    document.getElementById("antworten").appendChild(btn);
+  });
+
+  startTimer();
+}
+
+
+
+// --- Antwort prüfen ---
+function checkAntwort(eingabe,richtig){
+  if(isPaused) return; // ❗ NEU
+
+  clearInterval(timerID);
+  if(eingabe===richtig) richtigAntwort();
+  else falschAntwort(richtig);
+}
+
+function richtigAntwort(){document.getElementById("feedback").innerText="Richtig! 🎉"; document.getElementById("richtig").currentTime=0; document.getElementById("richtig").play(); punkte++; document.getElementById("punkte").innerText=punkte; nächsteFrage();}
+function falschAntwort(richtig){
+  leben--; updateLebenAnzeige(); 
+  const popup=document.getElementById("timeOverPopup");
+  document.getElementById("overlay").style.display="block";
+
+popup.innerHTML=`
+<div class="error-icon">✖</div>
+<span class="correct-answer-highlight">${richtig}</span>
+`;
+
+popup.style.display="block";
+  document.getElementById("falsch").currentTime=0; document.getElementById("falsch").play();
+  setTimeout(()=>{
+    document.getElementById("overlay").style.display="none"; popup.style.display="none";
+    if(leben<=0) spielZurücksetzen(); else nächsteFrage();
+  },4000);
+}
+function nächsteFrage(){aktuelleFrage++; starteFrage();}
+function updateProgress(){ const pr = ((aktuelleFrage+1)/level2.length)*100; document.getElementById("progressBar").style.width=pr+"%";}
+</script>
+
+<div id="footer">
+  © 2026 miStudia.de - Markus Autsch – Vokabelspiel MA
+</div>
+
+</body>
+
+
+</html>
