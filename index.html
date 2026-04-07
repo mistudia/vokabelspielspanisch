@@ -8,7 +8,10 @@
 body { font-family:'Segoe UI',sans-serif; text-align:center; margin:0; padding:0; transition: background 0.5s;}
 h1 { margin-top:20px; transition: color 0.5s;}
 #themeSelector { margin:10px; padding:5px; font-size:16px;}
-#status { display:flex; justify-content:center; gap:20px; margin:20px; transition: background 0.5s; flex-wrap:wrap;}
+#status { display:flex; justify-content:center; gap:20px; margin:20px;   align-items: center;   /* 🔥 sorgt für gleiche Höhe */
+
+
+transition: background 0.5s; flex-wrap:wrap;}
 
 /* --- Boxen zentriert --- */
 .box {
@@ -22,6 +25,10 @@ font-weight:bold;
 font-size:18px;
 box-shadow:0 4px 8px rgba(0,0,0,0.2);
 transition:all 0.5s;
+  height: 60px;           /* 🔥 NEU: feste Höhe */
+  min-width: 140px;       /* 🔥 optional: gleiche Breite */
+  line-height: 1;              /* 🔥 WICHTIG */
+
 }
 
 #wort {
@@ -49,14 +56,57 @@ transition:all 0.5s;
   cursor: pointer;
   transition: all 0.3s;
 }
+/* 🔥 COMBO ANIMATION */
+@keyframes firePulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.2); filter: brightness(1.5); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
 
+.combo-fire {
+  animation: firePulse 0.4s ease;
+}
+
+.combo-hot {
+  background: linear-gradient(135deg, #ff3d00, #ff0000);
+  color: white;
+  box-shadow: 0 0 20px #ff3d00;
+}
+
+/* 💥 SCREEN FLASH */
+@keyframes flashScreen {
+  0% { background: rgba(255,255,255,0); }
+  50% { background: rgba(255,255,255,0.9); }
+  100% { background: rgba(255,255,255,0); }
+}
+
+.flash {
+  animation: flashScreen 0.4s ease;
+}
+
+/* 🌋 SCREEN SHAKE */
+@keyframes shake {
+  0% { transform: translate(0px, 0px); }
+  25% { transform: translate(5px, -5px); }
+  50% { transform: translate(-5px, 5px); }
+  75% { transform: translate(5px, 5px); }
+  100% { transform: translate(0px, 0px); }
+}
+
+.shake {
+  animation: shake 0.3s;
+}
 
 #antworten button:hover { transform:scale(1.05); }
 
 #feedback { font-size:24px; margin-top:15px; height:30px; transition:all 0.3s;}
 #timerBarContainer, #progressContainer { width:60%; height:20px; border-radius:10px; margin:10px auto; overflow:hidden; background:#ccc; transition:all 0.5s;}
 #timerBar, #progressBar { height:100%; width:100%; transition: width 0.1s linear;}
-#leben { font-size:24px; margin:10px; }
+
+#leben { font-size:24px; margin:10px;   display: flex;            /* ✅ NEU */
+  align-items: center;      /* ✅ NEU */
+  justify-content: center;  /* ✅ NEU */
+  height: 60px;             /* ✅ NEU */ }
 
 /* Top 3 Farben */
 .gold {
@@ -95,6 +145,8 @@ position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 90px; /* 🔥 Abstand nach oben */
+
 
 }
 
@@ -137,10 +189,7 @@ position: relative;
   margin: 0 auto;       /* 👉 horizontal zentriert */
   text-align: center;
 }
-#timerBarContainer,
-#progressContainer {
-  display: none;
-}
+
 /* --- Artikel-Farben --- */
 .btn-der {
   background: #448aff;   /* blau */
@@ -187,11 +236,6 @@ position: relative;
   margin-top: 60px;
 }
 
-#startScreen label {
-  display: block;
-  font-size: 22px;
-  margin: 20px 0 10px 0;
-}
 
 #startScreen input,
 #startScreen select {
@@ -326,9 +370,15 @@ position: relative;
   white-space: nowrap;
 }
 #pauseBtn {
-  font-size: 16px;
+  position: relative;
+  z-index: 10001; /* höher als Overlay */
+  height: 60px;
+  min-width: 60px;
+
+  font-size: 20px;
   padding: 8px 14px;
-  border-radius: 10px;
+
+  border-radius: 12px;
   cursor: pointer;
 
   background: #2196f3;
@@ -337,19 +387,19 @@ position: relative;
 
   transition: 0.3s;
 
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 10px;
 }
 
 
 #overlay {
   pointer-events: none;
 }
-#status {
-  align-items: center;
-}
-#pauseBtn {
-  margin-left: 10px;
-}
+
+
 
 
 
@@ -444,6 +494,99 @@ font-size:32px;
   box-shadow: 0 0 15px rgba(0,0,0,0.4);
 }
 
+.highscore-subtitle {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.score-box {
+  background: linear-gradient(135deg, #ffd54f, #ff9800);
+  color: #000;
+  box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+}
+
+.score-box #punkte {
+  font-size: 28px;
+  font-weight: bold;
+}
+.start-box {
+  align-items: stretch; /* 🔥 statt center */
+
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(10px);
+
+  padding: 30px 40px;
+  border-radius: 20px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+} /* 🔥 DIESE KLAMMER HAT GEFEHLT */
+
+
+.start-box label {
+  display: grid;
+  grid-template-columns: 220px 1fr; /* 🔥 feste Label-Breite */
+  align-items: center;
+  gap: 15px;
+
+  width: 100%;
+  font-size: 20px;
+  text-align: left;
+}
+
+.start-box input,
+.start-box select {
+  width: 100%;
+  box-sizing: border-box;   /* 🔥 DAS ist der Gamechanger */
+
+}
+
+.start-box button {
+  margin-top: 10px;
+}
+
+#startScreen {
+  margin-top: 150px;
+}
+#backBtn {
+  height: 60px;
+  min-width: 60px;
+
+  font-size: 20px;
+  padding: 8px 14px;
+
+  border-radius: 12px;
+  cursor: pointer;
+
+  background: #4caf50;
+  color: white;
+  border: none;
+
+  transition: 0.3s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 10px;
+}
+
+#backBtn:hover {
+  transform: scale(1.05);
+}
+
+
+
+
+
+
+
+
 /* --- Tag/Nacht Styles --- */
 .day { 
   background: #e0f7fa;   /* 👉 nur EINE Farbe */
@@ -484,6 +627,37 @@ font-size:32px;
   margin-bottom: 20px;  /* 👉 mehr Abstand nach unten */
 }
 
+#fortschrittText {
+  transition: all 0.3s ease;
+}
+
+/* Farben je nach Fortschritt */
+.progress-low {
+  background: #4caf50;   /* grün */
+  color: white;
+}
+
+.progress-mid {
+  background: #ff9800;   /* orange */
+  color: white;
+}
+
+.progress-high {
+  background: #f44336;   /* rot */
+  color: white;
+}
+
+/* kleine Pop-Animation */
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.pop {
+  animation: pop 0.3s ease;
+}
+
 /* --- ✅ NEU: LOGO oben links --- */
 #logo {
 position: fixed;
@@ -517,16 +691,28 @@ filter: brightness(1.2);
 </select>
 
 <div id="startScreen">
-<label>Dein Name: <input id="playerName" placeholder="Name eingeben"></label><br>
-<label>Gesamtzeit wählen:
-<select id="timeSelector">
-<option value="60">1 Minute</option>
-<option value="180">3 Minuten</option>
-<option value="300">5 Minuten</option>
-</select>
-</label><br>
-<button id="startBtn">Spiel starten</button>
+
+  <div class="start-box">
+
+    <label>Dein Name:
+      <input id="playerName" placeholder="Name eingeben">
+    </label>
+
+    <label>Gesamtzeit wählen:
+      <select id="timeSelector">
+        <option value="60">1 Minute</option>
+        <option value="180">3 Minuten</option>
+        <option value="300">5 Minuten</option>
+      </select>
+    </label>
+
+    <button id="startBtn">Spiel starten</button>
+
+  </div>
+
 </div>
+
+
 
 <div id="gameWrapper">
 
@@ -534,36 +720,48 @@ filter: brightness(1.2);
 
 <div id="status" style="display:none;">
 
-  <div class="box">
-    <span>Punkte:</span>
-    <span id="punkte">0</span>
-  </div>
+<div class="box score-box">
+  <span>Punkte:</span>
+  <span id="punkte">0</span>
+</div>
+
+
+
+<div class="box" id="comboBox">
+  🔥 Combo x0
+</div>
+
 
   <div class="box">
     <span>Gesamtzeit:</span>
     <span id="gesamtzeit">0</span>
-    <span>&nbsp;s</span>
   </div>
 
+<div class="box" id="fortschrittText">
+  0 / 0
+</div>
   <div id="leben" class="box">❤️❤️❤️</div>
 
   <!-- 🔥 HIER rein -->
+
   <button id="pauseBtn">⏸</button>
+<button id="backBtn">🏠</button>
 
 </div>
 
-    <!-- ✅ Pause Button RICHTIG -->
-    <button id="pauseBtn">⏸ Pause</button>
+ 
 
     <div id="wort"></div>
 
-    <div id="timerBarContainer">
-      <div id="timerBar"></div>
-    </div>
+<div id="timerBarContainer" style="display:none;">
+  <div id="timerBar"></div>
+</div>
 
-    <div id="progressContainer">
-      <div id="progressBar" class="level2"></div>
-    </div>
+
+
+<div id="progressContainer" style="display:none;">
+  <div id="progressBar" class="level2"></div>
+</div>
 
     <div id="antworten"></div>
     <div id="feedback"></div>
@@ -586,8 +784,57 @@ filter: brightness(1.2);
 <audio id="richtig" src="https://freesound.org/data/previews/320/320654_5260870-lq.mp3"></audio> <audio id="falsch" src="https://freesound.org/data/previews/82/82921_1022653-lq.mp3"></audio>
 
 <script>
+
+
+function formatZeit(sekunden){
+
+
+  let min = Math.floor(sekunden / 60);
+  let sec = sekunden % 60;
+
+  // führende Null für Sekunden
+  if(sec < 10) sec = "0" + sec;
+
+  return min + ":" + sec;
+}
+
+// 🔙 BACK BUTTON
+document.getElementById("backBtn").onclick = function(){
+
+  if(!confirm("Spiel wirklich verlassen?")) return;
+
+  clearInterval(timerID);
+  clearInterval(gesamtTimerID);
+  gesamtTimerLaeuft = false;
+
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
+
+  addHighscore(playerName, punkte);
+
+  punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
+
+  document.getElementById("punkte").innerText = 0;
+  document.getElementById("gesamtzeit").innerText = formatZeit(0);
+
+  updateLebenAnzeige();
+  updateComboAnzeige();
+
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("status").style.display = "none";
+  document.getElementById("startScreen").style.display = "flex";
+};
+
 // --- Theme ---
+
 document.getElementById("pauseBtn").onclick = function(){
+
+
 
   if(!isPaused){
     // ⏸ Pause
@@ -645,22 +892,40 @@ let level2=[
 
 // --- Spielvariablen ---
 let punkte=0, aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
+let combo = 0;
+let aktuellerModus = 60; // 🔥 NEU
 let isPaused = false;
-let gesamtSpielZeit=60, gesamtSekunden=0, gesamtTimerID;
+let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
 let gesamtTimerLaeuft = false;
 
 // --- Highscore ---
-function getHighscores(){ return JSON.parse(localStorage.getItem("vokabelHighscores_level2")||"[]"); }
-function saveHighscores(hs){ localStorage.setItem("vokabelHighscores_level2",JSON.stringify(hs)); }
+function getHighscores(){ 
+  return JSON.parse(localStorage.getItem("vokabelHighscores_"+aktuellerModus)||"[]"); 
+}
+
+function saveHighscores(hs){ 
+  localStorage.setItem("vokabelHighscores_"+aktuellerModus, JSON.stringify(hs)); 
+}
 
 
 function updateAllHighscores(){
   let hs = getHighscores();
   hs.sort((a,b)=>b.punkte-a.punkte);
 
-  let html = "<div class='highscore-title'>🏆 Highscore</div>";
+let zeitText = {
+  60: "1 Minute",
+  180: "3 Minuten",
+  300: "5 Minuten"
+};
 
-  hs.slice(0,10).forEach((e,i)=>{
+
+let html = `
+  <div class='highscore-title'>🏆 Highscore</div>
+  <div class='highscore-subtitle'>(${zeitText[aktuellerModus]})</div>
+`;
+
+
+hs.slice(0,10).forEach((e,i)=>{
     let klasse = "";
 
     if(i === 0) klasse = "gold";
@@ -703,6 +968,13 @@ function showTop10Popup(name,punkte,rang){
 
 // --- Start ---
 document.getElementById("startBtn").onclick=function(){
+// 🔥 Reset beim Start
+document.getElementById("overlay").style.display = "none";
+document.getElementById("timeOverPopup").style.display = "none";
+document.getElementById("top10Popup").style.display = "none";
+combo = 0;
+updateComboAnzeige();
+document.getElementById("gameArea").style.display = "flex";
 document.getElementById("pauseBtn").style.display = "inline-block";
 document.getElementById("gameTitle").innerText = "Vokabelspiel MA 🎮";
 document.getElementById("highscoresContainer").style.display = "block";
@@ -710,7 +982,10 @@ document.getElementById("timerBarContainer").style.display = "block";
 document.getElementById("progressContainer").style.display = "block";
 
   playerName=document.getElementById("playerName").value.trim()||"Spieler";
-  gesamtSpielZeit=parseInt(document.getElementById("timeSelector").value);
+gesamtSpielZeit=parseInt(document.getElementById("timeSelector").value);
+aktuellerModus = gesamtSpielZeit; // 🔥 NEU
+gesamtSekunden = gesamtSpielZeit;
+document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
   shuffleArray(level2);
   document.getElementById("startScreen").style.display="none";
   document.getElementById("status").style.display="flex";
@@ -731,8 +1006,7 @@ function startTimer(){
     if(zeit<0) zeit=0;
     updateTimerBar();
 
-    if(zeit===0){ 
-      clearInterval(timerID); 
+if(zeit <= 0){      clearInterval(timerID); 
       zeitAbgelaufen(); 
     }
   },100);
@@ -742,6 +1016,7 @@ function startTimer(){
 
 
 function zeitAbgelaufen(){
+if(gesamtSekunden <= 0) return;
   const w = level2[aktuelleFrage];
   const correct = w[1];   // ✅ richtiger Artikel!
 
@@ -751,13 +1026,15 @@ function zeitAbgelaufen(){
   const popup=document.getElementById("timeOverPopup");
   popup.innerHTML=`⏰ Zeit abgelaufen!<br>Richtige Antwort: <span class="correct-answer-highlight">${correct}</span>`;
   popup.style.display="block";
- setTimeout(()=>{
+
+setTimeout(()=>{
   document.getElementById("overlay").style.display="none";
   popup.style.display="none";
 
-  // ❗ KEIN zweites Popup mehr
   leben--;
   updateLebenAnzeige();
+combo = 0;
+updateComboAnzeige();
 
   if(leben <= 0){
     spielZurücksetzen();
@@ -766,12 +1043,32 @@ function zeitAbgelaufen(){
   }
 
 },4000);
+
 }
 
 document.getElementById("richtig").volume=0.3;
 document.getElementById("falsch").volume=0.3;
 
 function updateLebenAnzeige(){ let str=""; for(let i=0;i<leben;i++) str+="❤️"; document.getElementById("leben").innerHTML=str; }
+
+function updateComboAnzeige(){
+  const el = document.getElementById("comboBox");
+
+  el.innerText = "🔥 Combo x" + combo;
+
+  // 🔥 Pulse-Effekt
+  el.classList.remove("combo-fire");
+  void el.offsetWidth;
+  el.classList.add("combo-fire");
+
+  // 🔥 HOT MODE ab Combo 5
+  if(combo >= 5){
+    el.classList.add("combo-hot");
+  } else {
+    el.classList.remove("combo-hot");
+  }
+}
+
 
 function startGesamtTimer(){ 
 
@@ -782,10 +1079,12 @@ function startGesamtTimer(){
   gesamtTimerID = setInterval(()=>{
     if(isPaused) return; // ❗ friert Zeit ein
 
-    gesamtSekunden++; 
-    document.getElementById("gesamtzeit").innerText = gesamtSekunden;
+gesamtSekunden--; 
+document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden)
 
-    if(gesamtSekunden >= gesamtSpielZeit){ 
+if(gesamtSekunden <= 0){
+
+clearInterval(timerID);   // 🔥 STOPPT Frage-Timer!
       clearInterval(gesamtTimerID);
       gesamtTimerLaeuft = false;
 
@@ -794,24 +1093,28 @@ function startGesamtTimer(){
       popup.innerHTML=`⏰ Gesamtzeit abgelaufen!<br>Punkte: ${punkte}`;
       popup.style.display="block";
 
-      setTimeout(()=>{
-        document.getElementById("overlay").style.display="none";
-        popup.style.display="none";
+    setTimeout(()=>{
 
-        addHighscore(playerName,punkte);
+  // ✅ ALLE POPUPS sauber schließen
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
+
+  addHighscore(playerName,punkte);
 
         punkte=0; 
         aktuelleFrage=0; 
         leben=3; 
-        gesamtSekunden = 0;
-
+gesamtSekunden = gesamtSpielZeit;
         document.getElementById("punkte").innerText=0; 
-        document.getElementById("gesamtzeit").innerText=0; 
-
+document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden)
         updateLebenAnzeige(); 
-
-        startGesamtTimer(); 
-        starteFrage();
+// 👉 Spiel ausblenden + zurück zum Start
+document.getElementById("gameArea").style.display = "none";
+document.getElementById("status").style.display = "none";
+document.getElementById("startScreen").style.display = "flex";
+  
 
       },4000);
     }
@@ -830,8 +1133,15 @@ function addHighscore(name,punkte){
 }
 
 // --- Spiel zurücksetzen ---
-function spielZurücksetzen(){ 
-  clearInterval(gesamtTimerID);
+function spielZurücksetzen(){
+
+// ✅ EINMAL reicht komplett
+document.getElementById("overlay").style.display = "none";
+document.getElementById("timeOverPopup").style.display = "none";
+document.getElementById("top10Popup").style.display = "none";
+document.getElementById("feedback").innerText = "";
+
+clearInterval(gesamtTimerID);
 
 
   alert("Keine Leben mehr! Spiel wird zurückgesetzt."); 
@@ -842,11 +1152,12 @@ function spielZurücksetzen(){
   leben=3; 
 
   document.getElementById("punkte").innerText=punkte; 
-  document.getElementById("gesamtzeit").innerText=0; 
+document.getElementById("gesamtzeit").innerText = formatZeit(0);
+  updateLebenAnzeige();
+document.getElementById("gameArea").style.display = "none";
+document.getElementById("status").style.display = "none";
+document.getElementById("startScreen").style.display = "flex";
 
-  updateLebenAnzeige(); 
-  startGesamtTimer(); 
-  starteFrage(); 
 }
 
 // --- Frage ---
@@ -900,9 +1211,73 @@ function checkAntwort(eingabe,richtig){
   else falschAntwort(richtig);
 }
 
-function richtigAntwort(){document.getElementById("feedback").innerText="Richtig! 🎉"; document.getElementById("richtig").currentTime=0; document.getElementById("richtig").play(); punkte++; document.getElementById("punkte").innerText=punkte; nächsteFrage();}
+function richtigAntwort(){
+
+  let bonus = 0;
+
+  if(zeit > 7) bonus = 3;
+  else if(zeit > 4) bonus = 2;
+  else if(zeit > 2) bonus = 1;
+
+  combo++;
+  updateComboAnzeige();
+
+  let comboBonus = Math.floor(combo / 3);
+
+  let megaMode = combo >= 10;
+
+  let gesamt = 1 + bonus + comboBonus;
+
+  if(megaMode){
+    gesamt += 5; // 💥 Extra Punkte erst ab 10
+  }
+
+  punkte += gesamt;
+
+  document.getElementById("punkte").innerText = punkte;
+
+  let text = `Richtig! 🎉 +${gesamt} (⚡${bonus} 🔥${comboBonus})`;
+
+  if(megaMode){
+    text += " 💥 MEGA MODE!!!";
+  }
+
+  document.getElementById("feedback").innerText = text;
+
+
+
+// 🌋 SHAKE nur im Mega Mode
+if(megaMode){
+  const game = document.getElementById("gameArea");
+
+  game.classList.add("shake");
+  game.classList.add("flash");
+
+  setTimeout(()=>{
+    game.classList.remove("shake");
+    game.classList.remove("flash");
+  },400);
+}
+
+  // 🔊 Sound
+  document.getElementById("richtig").currentTime = 0;
+  document.getElementById("richtig").play();
+
+  nächsteFrage();
+}
+
+
+
+
+
+
 function falschAntwort(richtig){
-  leben--; updateLebenAnzeige(); 
+combo = 0;
+updateComboAnzeige();
+  leben--; 
+
+
+updateLebenAnzeige(); 
   const popup=document.getElementById("timeOverPopup");
   document.getElementById("overlay").style.display="block";
 
@@ -918,8 +1293,43 @@ popup.style.display="block";
     if(leben<=0) spielZurücksetzen(); else nächsteFrage();
   },4000);
 }
+
+
 function nächsteFrage(){aktuelleFrage++; starteFrage();}
-function updateProgress(){ const pr = ((aktuelleFrage+1)/level2.length)*100; document.getElementById("progressBar").style.width=pr+"%";}
+function updateProgress(){ 
+  const total = level2.length;
+  const current = aktuelleFrage + 1;
+
+  const pr = (current / total) * 100;
+  document.getElementById("progressBar").style.width = pr + "%";
+
+  const el = document.getElementById("fortschrittText");
+
+  let remaining = total - current;
+
+  // 👉 Text
+  if(remaining <= 5){
+    el.innerText = "🔥 FAST FERTIG! " + current + " / " + total;
+  } else {
+    el.innerText = "📚 " + current + " / " + total;
+  }
+
+  // 👉 Farben reset
+  el.classList.remove("progress-low","progress-mid","progress-high");
+
+  if(pr < 40){
+    el.classList.add("progress-low");
+  } else if(pr < 80){
+    el.classList.add("progress-mid");
+  } else {
+    el.classList.add("progress-high");
+  }
+
+  // 👉 Animation
+  el.classList.remove("pop");
+  void el.offsetWidth;
+  el.classList.add("pop");
+}
 </script>
 
 <div id="footer">
