@@ -844,7 +844,50 @@ filter: brightness(1.2);
 <audio id="falsch" src="falsch.mp3"></audio>
 <script>
 
+const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
+
 console.log("JS läuft!");
+async function loadHighscoresOnline(){
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/highscores?select=*&order=score.desc&limit=10",
+    {
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+  return data;
+}
+async function addHighscoreOnline(name, punkte){
+
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/highscores", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        name: name,
+        score: punkte,
+        mode: aktuellerModus
+      })
+    });
+
+    console.log("✅ Highscore online gespeichert");
+
+  } catch(err){
+    console.error("❌ Fehler beim Speichern:", err);
+  }
+
+}
 
 // 🔊 UNIVERSAL SOUND FUNCTION
 function playSound(id){
@@ -1003,57 +1046,63 @@ function saveHighscores(hs){
 }
 
 
-function updateAllHighscores(){
-  let hs = getHighscores();
-  hs.sort((a,b)=>b.punkte-a.punkte);
+async function updateAllHighscores(){
 
-let zeitText = {
-  60: "1 Minute",
-  180: "3 Minuten",
-300: "5 Minuten",
-  600: "10 Minuten",
-  1020: "17 Minuten"
-};
+  let hs = [];
 
+  try {
+    hs = await loadHighscoresOnline();
+    console.log("📥 Geladene Highscores:", hs);
+  } catch(e){
+    console.error("❌ Fehler beim Laden:", e);
+  }
 
-let html = `
-  <div class='highscore-title'>🏆 Highscore</div>
-  <div class='highscore-subtitle'>(${zeitText[aktuellerModus]})</div>
-`;
+  let zeitText = {
+    60: "1 Minute",
+    180: "3 Minuten",
+    300: "5 Minuten",
+    600: "10 Minuten",
+    1020: "17 Minuten"
+  };
 
+  let html = `
+    <div class='highscore-title'>🏆 Online Highscore</div>
+    <div class='highscore-subtitle'>(${zeitText[aktuellerModus]})</div>
+  `;
 
-hs.slice(0,10).forEach((e,i)=>{
+  // 👉 WICHTIG: wenn leer
+  if(!hs || hs.length === 0){
+    html += `<div style="text-align:center; opacity:0.7;">Noch keine Einträge</div>`;
+  }
+
+  hs.forEach((e,i)=>{
+
     let klasse = "";
-
     if(i === 0) klasse = "gold";
     else if(i === 1) klasse = "silver";
     else if(i === 2) klasse = "bronze";
 
-    if(e.name === playerName) klasse += " me";
-
     let medal = ["🥇","🥈","🥉"][i] || "";
-
-    let medalHTML = "";
-    if(i < 3){
-      medalHTML = `<div class="medal-circle">${medal}</div>`;
-    }
 
     html += `
       <div class="highscore-item ${klasse}">
-        
         <div class="highscore-row">
-          ${medalHTML}
+          <div class="medal-circle">${medal}</div>
           <div class="highscore-name">${i+1}. ${e.name}</div>
         </div>
-
-        <div class="highscore-points">${e.punkte} Punkte</div>
-
+        <div class="highscore-points">${e.score} Punkte</div>
       </div>
     `;
   });
 
   document.getElementById("highscoreList2").innerHTML = html;
 }
+
+
+
+
+
+
 
 // --- Popups ---
 function showTop10Popup(name,punkte,rang){
@@ -1226,6 +1275,7 @@ document.getElementById("startScreen").style.display = "flex";
 
 // --- Highscore Funktionen ---
 function addHighscore(name,punkte){
+addHighscoreOnline(name, punkte);
   let hs=getHighscores();
   hs.push({name,punkte}); hs.sort((a,b)=>b.punkte-a.punkte);
   if(hs.length>10) hs=hs.slice(0,10);
@@ -1233,7 +1283,7 @@ function addHighscore(name,punkte){
 
 
 
-let rang = hs.findIndex(e => e.name === name && e.punkte === punkte) + 1;
+let rang = hs.findIndex(e => e.name === name && e.score === punkte) + 1;
 
 // 👉 NUR Top 3 reagieren
 if(rang > 0 && rang <= 3){
