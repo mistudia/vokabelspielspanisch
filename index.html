@@ -675,7 +675,64 @@ opacity: 1;
 }
 .night #logo {
 filter: brightness(1.2);
-} </style>
+} 
+
+#jubelElefant {
+  position: fixed;
+  top: -250px;
+  left: 0; /* 🔥 WICHTIG: statt right */
+  width: 200px;
+  z-index: 10000;
+  transition: all 0.8s cubic-bezier(.2,1.4,.4,1);
+}
+
+.elefant-show {
+  top: 180px !important;
+  transform: rotate(-5deg);
+}
+
+
+@keyframes elefantJump {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-50px); }
+  60% { transform: translateY(0); }
+  100% { transform: translateY(-20px); }
+}
+
+.elefant-animate {
+  animation: elefantJump 0.6s ease 4;
+}
+
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.elefant-blink {
+  animation: blink 2s infinite;
+  transform-origin: center;
+}
+
+#elefantGlow {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,215,0,0.6), transparent 70%);
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+.glow-active {
+  opacity: 1;
+}
+
+
+
+</style>
 
 </head>
 <body class="day">
@@ -703,6 +760,8 @@ filter: brightness(1.2);
         <option value="60">1 Minute</option>
         <option value="180">3 Minuten</option>
         <option value="300">5 Minuten</option>
+  <option value="600">10 Minuten</option>
+  <option value="1020">17 Minuten</option>
       </select>
     </label>
 
@@ -781,10 +840,20 @@ filter: brightness(1.2);
 <div id="overlay"></div>
 <div id="timeOverPopup"></div>
 
-<audio id="richtig" src="https://freesound.org/data/previews/320/320654_5260870-lq.mp3"></audio> <audio id="falsch" src="https://freesound.org/data/previews/82/82921_1022653-lq.mp3"></audio>
-
+<audio id="richtig" src="sound.mp3"></audio>
+<audio id="falsch" src="falsch.mp3"></audio>
 <script>
 
+console.log("JS läuft!");
+
+// 🔊 UNIVERSAL SOUND FUNCTION
+function playSound(id){
+  const s = document.getElementById(id);
+  if(s){
+    s.currentTime = 0;
+    s.play();
+  }
+}
 
 function formatZeit(sekunden){
 
@@ -801,7 +870,6 @@ function formatZeit(sekunden){
 // 🔙 BACK BUTTON
 document.getElementById("backBtn").onclick = function(){
 
-  if(!confirm("Spiel wirklich verlassen?")) return;
 
   clearInterval(timerID);
   clearInterval(gesamtTimerID);
@@ -872,6 +940,7 @@ function shuffleArray(array){ for(let i=array.length-1;i>0;i--){ const j=Math.fl
 
 // --- Verben ---
 let level2=[
+
 ["abrir","öffnen"],["amar","lieben"],["aprender","lernen"],["ayudar","helfen"],
 ["beber","trinken"],["buscar","suchen"],["cerrar","schließen"],["cocinar","kochen"],
 ["comer","essen"],["conocer","kennen"],["correr","laufen/rennen"],["creer","glauben"],
@@ -890,9 +959,18 @@ let level2=[
 ["viajar","reisen"],["vivir","leben/wohnen"],["volver","zurückkommen"]
 ];
 
+let vokabeln = level2.map(v => ({
+  spanisch: v[0],
+  deutsch: v[1],
+  weight: 1
+}));
+
+let aktuelleVokabel = null;
+
 // --- Spielvariablen ---
 let punkte=0, aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
 let combo = 0;
+let highscoreSchonVerarbeitet = false; // 🔥 NEU
 let aktuellerModus = 60; // 🔥 NEU
 let isPaused = false;
 let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
@@ -901,6 +979,23 @@ let gesamtTimerLaeuft = false;
 // --- Highscore ---
 function getHighscores(){ 
   return JSON.parse(localStorage.getItem("vokabelHighscores_"+aktuellerModus)||"[]"); 
+}
+
+function getNaechsteVokabel(){
+
+  let pool = vokabeln.filter(v => v !== aktuelleVokabel);
+
+  let totalWeight = pool.reduce((sum,v)=>sum+v.weight,0);
+  let rnd = Math.random() * totalWeight;
+
+  for(let v of pool){
+    rnd -= v.weight;
+    if(rnd <= 0){
+      return v;
+    }
+  }
+
+  return pool[0];
 }
 
 function saveHighscores(hs){ 
@@ -915,7 +1010,9 @@ function updateAllHighscores(){
 let zeitText = {
   60: "1 Minute",
   180: "3 Minuten",
-  300: "5 Minuten"
+300: "5 Minuten",
+  600: "10 Minuten",
+  1020: "17 Minuten"
 };
 
 
@@ -963,11 +1060,13 @@ function showTop10Popup(name,punkte,rang){
   const popup=document.getElementById("top10Popup");
   popup.innerHTML=`🎉 Glückwunsch ${name}! <br> Rang ${rang} in den Top 10! <br> Punkte: ${punkte}`;
   popup.style.display="block";
-  setTimeout(()=>{popup.style.display="none";},4000);
+  setTimeout(()=>{popup.style.display="none";},5000);
 }
 
 // --- Start ---
 document.getElementById("startBtn").onclick=function(){
+highscoreSchonVerarbeitet = false; // 🔥 RESET
+
 // 🔥 Reset beim Start
 document.getElementById("overlay").style.display = "none";
 document.getElementById("timeOverPopup").style.display = "none";
@@ -1016,9 +1115,12 @@ if(zeit <= 0){      clearInterval(timerID);
 
 
 function zeitAbgelaufen(){
+
+if(aktuelleVokabel){
+  aktuelleVokabel.weight += 2;
+}
 if(gesamtSekunden <= 0) return;
-  const w = level2[aktuelleFrage];
-  const correct = w[1];   // ✅ richtiger Artikel!
+const correct = aktuelleVokabel.deutsch;
 
 
 
@@ -1042,12 +1144,12 @@ updateComboAnzeige();
     nächsteFrage();
   }
 
-},4000);
+},1600);
 
 }
 
 document.getElementById("richtig").volume=0.3;
-document.getElementById("falsch").volume=0.3;
+document.getElementById("falsch").volume = 0.3;
 
 function updateLebenAnzeige(){ let str=""; for(let i=0;i<leben;i++) str+="❤️"; document.getElementById("leben").innerHTML=str; }
 
@@ -1128,8 +1230,50 @@ function addHighscore(name,punkte){
   hs.push({name,punkte}); hs.sort((a,b)=>b.punkte-a.punkte);
   if(hs.length>10) hs=hs.slice(0,10);
   saveHighscores(hs); updateAllHighscores();
-  let rang=hs.findIndex(e=>e.name===name && e.punkte===punkte)+1;
-  if(rang>0 && rang<=10) showTop10Popup(name,punkte,rang);
+
+
+
+let rang = hs.findIndex(e => e.name === name && e.punkte === punkte) + 1;
+
+// 👉 NUR Top 3 reagieren
+if(rang > 0 && rang <= 3){
+
+  // ❗ nur einmal pro Spiel
+  if(highscoreSchonVerarbeitet) return;
+  highscoreSchonVerarbeitet = true;
+
+  // 🥇 Platz 1
+  if(rang === 1){
+
+    jubelChoreo();
+
+    document.getElementById("feedback").innerText = "👑 PLATZ 1!!!";
+
+    const game = document.getElementById("gameArea");
+    game.classList.add("flash");
+
+    setTimeout(()=>{
+      game.classList.remove("flash");
+    },500);
+
+  }
+
+  // 🥈🥉 Platz 2–3
+  else {
+
+    jubelChoreo();
+
+    document.getElementById("feedback").innerText = "🏆 TOP 3!";
+  }
+}
+
+// 👉 Top 10 Popup bleibt IMMER
+if(rang > 0 && rang <= 10){
+  showTop10Popup(name, punkte, rang);
+}
+
+
+
 }
 
 // --- Spiel zurücksetzen ---
@@ -1143,9 +1287,9 @@ document.getElementById("feedback").innerText = "";
 
 clearInterval(gesamtTimerID);
 
+addHighscore(playerName,punkte); 
 
-  alert("Keine Leben mehr! Spiel wird zurückgesetzt."); 
-  addHighscore(playerName,punkte); 
+
 
   punkte=0; 
   aktuelleFrage=0; 
@@ -1172,18 +1316,16 @@ function starteFrage(){
 
   if(aktuelleFrage>=level2.length) aktuelleFrage=0;
 
-  const w = level2[aktuelleFrage];
-
+const w = getNaechsteVokabel();
+aktuelleVokabel = w;
   // 👉 Spanisches Verb anzeigen
   document.getElementById("wort").innerHTML = `
-    <div class="wort-box">${w[0]}</div>
-  `;
+<div class="wort-box">${w.spanisch}</div>  `;
 
   // 👉 Richtige + falsche Antworten erzeugen
-  let antworten = [w[1]];
-
+let antworten = [w.deutsch];
   while(antworten.length < 4){
-    let random = level2[Math.floor(Math.random()*level2.length)][1];
+let random = vokabeln[Math.floor(Math.random()*vokabeln.length)].deutsch;
     if(!antworten.includes(random)) antworten.push(random);
   }
 
@@ -1193,7 +1335,7 @@ function starteFrage(){
     const btn = document.createElement("button");
     btn.innerText = a;
 
-    btn.onclick = ()=>checkAntwort(a, w[1]);
+btn.onclick = ()=>checkAntwort(a, w.deutsch);
     document.getElementById("antworten").appendChild(btn);
   });
 
@@ -1212,6 +1354,9 @@ function checkAntwort(eingabe,richtig){
 }
 
 function richtigAntwort(){
+if(aktuelleVokabel){
+  aktuelleVokabel.weight = Math.max(1, aktuelleVokabel.weight - 1);
+}
 
   let bonus = 0;
 
@@ -1259,9 +1404,6 @@ if(megaMode){
   },400);
 }
 
-  // 🔊 Sound
-  document.getElementById("richtig").currentTime = 0;
-  document.getElementById("richtig").play();
 
   nächsteFrage();
 }
@@ -1272,6 +1414,9 @@ if(megaMode){
 
 
 function falschAntwort(richtig){
+if(aktuelleVokabel){
+  aktuelleVokabel.weight += 3;
+}
 combo = 0;
 updateComboAnzeige();
   leben--; 
@@ -1287,11 +1432,16 @@ popup.innerHTML=`
 `;
 
 popup.style.display="block";
-  document.getElementById("falsch").currentTime=0; document.getElementById("falsch").play();
+
+
+playSound("falsch");
+
+
+
   setTimeout(()=>{
     document.getElementById("overlay").style.display="none"; popup.style.display="none";
     if(leben<=0) spielZurücksetzen(); else nächsteFrage();
-  },4000);
+  },1000);
 }
 
 
@@ -1330,7 +1480,106 @@ function updateProgress(){
   void el.offsetWidth;
   el.classList.add("pop");
 }
+
+
+function konfettiAusRüssel(){
+
+  const elefant = document.getElementById("jubelElefant");
+  const rect = elefant.getBoundingClientRect();
+
+const startX = rect.left + 60; // andere Seite wegen Spiegelung
+  const startY = rect.top + 80;
+
+  for(let i = 0; i < 40; i++){
+
+    let k = document.createElement("div");
+
+    k.style.position = "fixed";
+    k.style.left = startX + "px";
+    k.style.top = startY + "px";
+
+    k.style.width = "8px";
+
+
+    k.style.height = "8px";
+    k.style.background = `hsl(${Math.random()*360},100%,50%)`;
+    k.style.borderRadius = "50%";
+    k.style.zIndex = "10001";
+
+    document.body.appendChild(k);
+
+let x = (Math.random() - 0.5) * 200;
+    let y = Math.random() * 300;
+
+    k.animate([
+      { transform: "translate(0,0)", opacity: 1 },
+      { transform: `translate(${x}px, ${y}px)`, opacity: 0 }
+    ], {
+      duration: 1200 + Math.random()*500,
+      easing: "ease-out"
+    });
+
+    setTimeout(()=>k.remove(),1500);
+  }
+}
+
+function jubelChoreo(){
+  positioniereElefant(); // 🔥 NEU
+
+  const elefant = document.getElementById("jubelElefant");
+  const glow = document.getElementById("elefantGlow");
+
+  elefant.classList.add("elefant-show");
+  glow.classList.add("glow-active");
+
+  setTimeout(()=>{
+    elefant.classList.add("elefant-animate");
+    elefant.classList.add("elefant-blink");
+  }, 200);
+
+  let interval = setInterval(konfettiAusRüssel, 300);
+
+playSound("richtig");
+
+
+
+  setTimeout(()=>{
+    clearInterval(interval);
+
+    elefant.classList.remove("elefant-show");
+    elefant.classList.remove("elefant-animate");
+    elefant.classList.remove("elefant-blink");
+    glow.classList.remove("glow-active");
+  }, 4000);
+}
+
+function positioniereElefant(){
+
+  const box = document.querySelector(".start-box") 
+           || document.getElementById("gameArea");
+
+  const elefant = document.getElementById("jubelElefant");
+
+  if(!box || !elefant) return;
+
+  const rect = box.getBoundingClientRect();
+
+  // 👉 rechts neben Box
+  const x = rect.right + 1300;
+
+  elefant.style.left = x + "px";
+}
+
+window.jubelChoreo = jubelChoreo;
+
+window.addEventListener("resize", positioniereElefant);
+window.addEventListener("load", positioniereElefant);
+
 </script>
+
+<!-- 🐘 ELEFANT -->
+<img src="elefant.png" id="jubelElefant">
+<div id="elefantGlow"></div>
 
 <div id="footer">
   © 2026 miStudia.de - Markus Autsch – Vokabelspiel MA
