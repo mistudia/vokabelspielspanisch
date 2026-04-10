@@ -44,9 +44,54 @@ transition:all 0.5s;
   display: flex;
   justify-content: center;
   gap: 15px;
-  flex-wrap: nowrap;   /* 👉 bricht um, falls nötig */
+  flex-wrap: wrap;   /* 👉 bricht um, falls nötig */
   margin: 20px auto;
 }
+
+
+#checkBtn {
+  margin-left: 10px;
+  padding: 12px 18px;
+
+  font-size: 18px;
+  font-weight: bold;
+
+  border-radius: 12px;
+  border: none;
+
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 15px rgba(76,175,80,0.5);
+  transition: all 0.3s ease;
+}
+
+/* Hover */
+#checkBtn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 10px 25px rgba(76,175,80,0.8);
+}
+
+/* Klick */
+#checkBtn:active {
+  transform: scale(0.95);
+}
+
+#inputAntwort {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+#textAntwort::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+
 
 #antworten button {
   min-width: 150px;
@@ -231,9 +276,13 @@ position: relative;
   gap: 8px;
 }
 
-/* --- STARTSCREEN VERBESSERN --- */
+
 #startScreen {
   margin-top: 60px;
+}
+
+.start-box h2 {
+  margin: 4px 0 2px 0;   /* oben / unten reduziert */
 }
 
 
@@ -243,17 +292,17 @@ position: relative;
   padding: 10px 15px;
   border-radius: 10px;
   margin-top: 8px;
-  width: 260px;
+ width: 100%;
+  max-width: 400px;
 }
 
 #startScreen button {
-  margin-top: 30px;
+  margin-top: 5px;
   font-size: 24px;
   padding: 15px 30px;
   border-radius: 12px;
   cursor: pointer;
-  background: #4caf50;
-  color: white;
+
   border: none;
   transition: 0.3s;
 }
@@ -266,6 +315,38 @@ position: relative;
   flex-direction: column;
   align-items: center;
 }
+
+#textAntwort {
+  width: 320px;
+  max-width: 80%;  padding: 12px 16px;
+
+  font-size: 18px;
+  border-radius: 12px;
+
+  border: 2px solid #ccc;
+  outline: none;
+
+  transition: all 0.3s ease;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Fokus-Effekt */
+#textAntwort:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 12px rgba(76,175,80,0.5);
+  transform: scale(1.03);
+}
+
+
+
+
+
+
+
+
+
+
 /* --- Highscore einzelne Boxen --- */
 .highscore-item {
   padding: 10px 12px;
@@ -327,26 +408,11 @@ position: relative;
   border: 2px solid #00e5ff;
   box-shadow: 0 0 15px #00e5ff;
 }
-/* --- Medaillen als Kreise --- */
-.medal-circle {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
 
-  width: 32px;
-  height: 32px;
 
-  border-radius: 50%;
-  background: white;
-  color: black;
 
-  font-size: 16px;
-  font-weight: bold;
 
-  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 
-  justify-self: start; /* 👈 bleibt drin */
-}
 /* --- Highscore Zeile korrekt ausrichten --- */
 .highscore-row {
   display: grid;
@@ -400,13 +466,39 @@ position: relative;
 }
 
 
+#startBtn {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
 
+  font-size: 26px;
+  font-weight: bold;
 
+  padding: 16px 20px;
 
+  box-shadow: 0 6px 20px rgba(76,175,80,0.6);
 
+  transform: scale(1.05);
+  transition: all 0.3s;
+}
 
+#startBtn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 10px 30px rgba(76,175,80,0.9);
+}
 
+@keyframes startPulse {
+  0% { box-shadow: 0 0 0 rgba(76,175,80,0.4); }
+  50% { box-shadow: 0 0 25px rgba(76,175,80,0.9); }
+  100% { box-shadow: 0 0 0 rgba(76,175,80,0.4); }
+}
 
+#startBtn {
+  animation: startPulse 2s infinite;
+}
+
+.start-box h2 {
+  display: none;
+}
 
 .highscore-title {
   font-size: 24px;
@@ -472,7 +564,21 @@ box-shadow:0 0 30px rgba(0,0,0,0.7);
 z-index:10000;
 text-align:center;
 }
-#timeOverPopup { background:#ff4444; color:#fff; }
+#timeOverPopup {
+  color: #fff;
+}
+
+/* ❌ Fehler = rot */
+.popup-error {
+  background: #ff4444;
+  color: #fff;
+}
+
+/* 🏁 Ende = gelb */
+.popup-end {
+  background: linear-gradient(135deg, #ffd54f, #ff9800);
+  color: #000;
+}
 #overlay { top:0; left:0; transform:none; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9000; }
 
 .correct-answer-highlight {
@@ -517,22 +623,23 @@ font-size:32px;
   background: rgba(255,255,255,0.25);
   backdrop-filter: blur(10px);
 
-  padding: 30px 40px;
+  padding: 20px 25px;
   border-radius: 20px;
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
+ max-width: 750px;     /* 🔥 NEU → begrenzt Breite */
+  width: 90%;
 } /* 🔥 DIESE KLAMMER HAT GEFEHLT */
-
 
 .start-box label {
   display: grid;
   grid-template-columns: 220px 1fr; /* 🔥 feste Label-Breite */
   align-items: center;
-  gap: 15px;
+  gap: 20px;
 
   width: 100%;
   font-size: 20px;
@@ -551,38 +658,88 @@ font-size:32px;
 }
 
 #startScreen {
-  margin-top: 150px;
+  margin-top: 80px;
 }
-#backBtn {
-  height: 60px;
-  min-width: 60px;
 
-  font-size: 20px;
-  padding: 8px 14px;
+
+#backBtn {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+
+  font-size: 26px;              /* 🔥 größer */
+  font-weight: bold;
+
+  padding: 16px 20px;           /* 🔥 größer */
 
   border-radius: 12px;
-  cursor: pointer;
-
-  background: #4caf50;
-  color: white;
   border: none;
 
-  transition: 0.3s;
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(76,175,80,0.6);
+
+  transform: scale(1.05);       /* 🔥 wie Start */
+  transition: all 0.3s;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  min-width: 70px;              /* 🔥 wichtig */
+  height: 60px;                 /* 🔥 überschreibt .box Höhe */
+
   margin-left: 10px;
 }
 
 #backBtn:hover {
-  transform: scale(1.05);
+  transform: scale(1.12);
+  box-shadow: 0 10px 30px rgba(76,175,80,0.9);
 }
 
+#backBtn:active {
+  transform: scale(0.95);
+}
 
+.popupBtnRow {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
 
+/* Basis (wie Start-Button) */
+.popupBtn {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
 
+  font-size: 22px;
+  font-weight: bold;
+
+  padding: 14px 22px;
+
+  border-radius: 12px;
+  border: none;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(76,175,80,0.6);
+  transition: all 0.3s;
+}
+
+.popupBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 30px rgba(76,175,80,0.9);
+}
+
+.popupBtn:active {
+  transform: scale(0.95);
+}
+
+/* 🔄 Optional: anderer Look für "Nochmal" */
+.replayBtn {
+  background: linear-gradient(135deg, #2196f3, #0d47a1);
+  box-shadow: 0 6px 20px rgba(33,150,243,0.6);
+}
 
 
 
@@ -729,8 +886,209 @@ filter: brightness(1.2);
 .glow-active {
   opacity: 1;
 }
+#inputWrapper {
+  position: relative;
+  width: 300px;
+  margin: auto;
+  margin-left: 100px;   /* 🔥 Abstand vom linken Rand */
+
+}
+
+#highlightLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  color: transparent;
+  pointer-events: none;
+
+  font-size: 16px;
+  padding: 10px;
+}
+
+#highlightLayer .error-line {
+  background: rgba(255, 0, 0, 0.3);
+  display: block;
+}
+
+#customVocabInput {
+  position: relative;
+  width: 100%;
+  height: 220px;
+
+  font-size: 16px;
+  padding: 10px;
+
+  background: transparent;
+  z-index: 2;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+.popupBtn {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+
+  font-size: 24px;
+  font-weight: bold;
+
+  padding: 16px 24px;
+
+  border-radius: 12px;
+  border: none;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(76,175,80,0.6);
+
+  transition: all 0.3s;
+
+  margin-top: 15px;
+}
+
+.popupBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 30px rgba(76,175,80,0.9);
+}
+
+.popupBtn:active {
+  transform: scale(0.95);
+}
+
+.button-group button {
+  width: 100%;
+  font-size: 20px;
+  padding: 12px;
+  border-radius: 10px;
+}
+#ankiButtons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+#ankiButtons button {
+  padding: 14px 18px;
+  font-size: 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#ankiButtons button:hover {
+  transform: scale(1.08);
+}
+
+/* Farben */
+#ankiButtons button:nth-child(1) { background:#f44336; color:white; }
+#ankiButtons button:nth-child(2) { background:#ff9800; color:white; }
+#ankiButtons button:nth-child(3) { background:#4caf50; color:white; }
+#ankiButtons button:nth-child(4) { background:#2196f3; color:white; }
 
 
+.input-row {
+  display: flex;
+  gap: 80px;
+  min-height: 240px;   /* 🔥 sorgt für mehr „Block-Gefühl“ */
+
+  align-items: flex-start;
+  width: 100%;
+}
+
+#inputWrapper {
+  flex: 1;
+  width: 100%;
+
+}
+
+
+
+@media (max-width: 600px) {
+
+  #gameWrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #highscoresContainer {
+    position: static;
+    margin-top: 20px;
+  }
+
+  #antworten button {
+    font-size: 18px;
+    min-width: 120px;
+  }
+
+  .wort-box {
+    font-size: 26px;
+  }
+
+}
+
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 220px;
+}
+
+#hintContainer {
+  display: none;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+#hintBtn {
+  padding: 18px 24px;
+  font-size: 22px;
+
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+
+  background: linear-gradient(135deg, #ffd54f, #ff9800);
+  color: #000;
+
+  box-shadow: 0 8px 25px rgba(255,152,0,0.6);
+
+  transition: all 0.3s;
+
+  min-width: 220px;
+}
+
+#hintBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 35px rgba(255,152,0,0.9);
+}
+
+.button-group button {
+  width: 100%;
+  margin-top: 0;
+ background: #4caf50;
+  color: white;
+}
+
+#saveCustomBtn {
+  background: #2196f3;   /* 🔵 blau */
+  color: white;
+}
+
+#useDefaultBtn {
+  background: #ffeb3b;   /* 🟡 gelb */
+  color: black;
+}
 
 </style>
 
@@ -755,17 +1113,51 @@ filter: brightness(1.2);
       <input id="playerName" placeholder="Name eingeben">
     </label>
 
-    <label>Gesamtzeit wählen:
-      <select id="timeSelector">
-        <option value="60">1 Minute</option>
-        <option value="180">3 Minuten</option>
-        <option value="300">5 Minuten</option>
-  <option value="600">10 Minuten</option>
-  <option value="1020">17 Minuten</option>
-      </select>
-    </label>
+<label>Gesamtzeit wählen:
+  <select id="timeSelector">
+    <option value="60">1 Minute</option>
+    <option value="180">3 Minuten</option>
+    <option value="300">5 Minuten</option>
+    <option value="600">10 Minuten</option>
+    <option value="1020">17 Minuten</option>
+  </select>
+</label>
 
-    <button id="startBtn">Spiel starten</button>
+<label>Modus:
+  <select id="modeSelector">
+<option value="learn">💡 Lernen (Spaced Repetition)</option>
+<option value="multiple">🎯 Multiple Choice</option>
+<option value="typing">⌨️ Selbst eintippen</option>
+  </select>
+</label>
+
+
+
+
+<hr style="width:80%; margin:20px auto;">
+
+<h2>👨‍🏫 Lehrer-Modus</h2>
+
+<div class="input-row">
+
+  <div id="inputWrapper">
+    <div id="highlightLayer"></div>
+    <textarea id="customVocabInput" placeholder="z.B.
+hablar sprechen
+comer essen
+vivir leben/wohnen
+ser/estar sein"></textarea>
+  </div>
+
+  <div class="button-group">
+    <button id="saveCustomBtn">💾 Vokabeln speichern</button>
+    <button id="useDefaultBtn">🔄 Standard nutzen</button>
+    <button id="startBtn">▶ Spiel starten</button>
+  </div>
+
+</div>
+
+
 
   </div>
 
@@ -782,6 +1174,10 @@ filter: brightness(1.2);
 <div class="box score-box">
   <span>Punkte:</span>
   <span id="punkte">0</span>
+</div>
+
+<div class="box" id="dailyBox">
+  🎯 0 / 20 | 🔥 0
 </div>
 
 
@@ -812,6 +1208,7 @@ filter: brightness(1.2);
 
     <div id="wort"></div>
 
+
 <div id="timerBarContainer" style="display:none;">
   <div id="timerBar"></div>
 </div>
@@ -822,7 +1219,24 @@ filter: brightness(1.2);
   <div id="progressBar" class="level2"></div>
 </div>
 
-    <div id="antworten"></div>
+<div id="antworten"></div>
+
+<!-- 💡 HINWEIS BUTTON -->
+<div id="hintContainer">
+  <button id="hintBtn">💡 Lösung anzeigen</button>
+</div>
+
+<!-- 🧠 ANKI BUTTONS -->
+<div id="ankiButtons" style="display:none; margin-top:20px;">
+  <button onclick="ankiAnswer('again')">❌ Wiederholen</button>
+  <button onclick="ankiAnswer('hard')">😬 Schwer</button>
+  <button onclick="ankiAnswer('good')">🙂 Gut</button>
+  <button onclick="ankiAnswer('easy')">🚀 Easy</button>
+</div>
+<div id="inputAntwort" style="display:none;">
+  <input id="textAntwort" placeholder="Antwort eingeben..." />
+  <button id="checkBtn">OK</button>
+</div>
     <div id="feedback"></div>
 
   </div>
@@ -840,9 +1254,28 @@ filter: brightness(1.2);
 <div id="overlay"></div>
 <div id="timeOverPopup"></div>
 
+
 <audio id="richtig" src="sound.mp3"></audio>
 <audio id="falsch" src="falsch.mp3"></audio>
+
+
 <script>
+window.onerror = function(msg){
+  console.error("💥 JS ERROR:", msg);
+};
+function resetGameState(){
+
+  clearInterval(timerID);
+  clearInterval(gesamtTimerID);
+
+  isPaused = false;
+  gesamtTimerLaeuft = false;
+
+  zeit = 10;
+  gesamtSekunden = gesamtSpielZeit;
+
+  aktuelleVokabel = null;
+}
 
 const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
@@ -910,25 +1343,23 @@ function formatZeit(sekunden){
   return min + ":" + sec;
 }
 
-// 🔙 BACK BUTTON
 document.getElementById("backBtn").onclick = function(){
 
-
-  clearInterval(timerID);
-  clearInterval(gesamtTimerID);
-  gesamtTimerLaeuft = false;
-
-  document.getElementById("overlay").style.display = "none";
-  document.getElementById("timeOverPopup").style.display = "none";
-  document.getElementById("top10Popup").style.display = "none";
-  document.getElementById("feedback").innerText = "";
+  resetGameState();
 
   addHighscore(playerName, punkte);
 
+  // --- Reset Werte ---
   punkte = 0;
   aktuelleFrage = 0;
   leben = 3;
   combo = 0;
+
+  // --- UI Reset ---
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
 
   document.getElementById("punkte").innerText = 0;
   document.getElementById("gesamtzeit").innerText = formatZeit(0);
@@ -940,6 +1371,9 @@ document.getElementById("backBtn").onclick = function(){
   document.getElementById("status").style.display = "none";
   document.getElementById("startScreen").style.display = "flex";
 };
+
+
+
 
 // --- Theme ---
 
@@ -974,7 +1408,6 @@ document.getElementById("pauseBtn").onclick = function(){
 
     this.innerText = "⏸";
   }
-
 };
 document.getElementById("themeSelector").addEventListener("change", e=>{document.body.className=e.target.value;});
 
@@ -1003,43 +1436,74 @@ let level2=[
 ];
 
 let vokabeln = level2.map(v => ({
-  spanisch: v[0],
-  deutsch: v[1],
-  weight: 1
+  spanisch: v[0].split("/"),
+  deutsch: v[1].split("/"),
+  box: 1,
+  next: 0
 }));
 
 let aktuelleVokabel = null;
 
 // --- Spielvariablen ---
 let punkte=0, aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
+let spielModus = "multiple";
+let falschListe = [];
+let falschDetails = [];
+let wiederholModus = false;
+let aktuelleListe = [];
+
+
 let combo = 0;
 let highscoreSchonVerarbeitet = false; // 🔥 NEU
 let aktuellerModus = 60; // 🔥 NEU
 let isPaused = false;
 let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
 let gesamtTimerLaeuft = false;
+// 🧠 SPACED REPETITION SPEICHERN
+function saveLearningData(){
+  localStorage.setItem("lernVokabeln", JSON.stringify(vokabeln));
+}
+let dailyGoal = 20;
+let dailyDone = 0;
+let streak = 0;
+let antwortAngezeigt = false;
+function nächsteLernVokabel(){
+
+  let now = Date.now();
+
+  let verfügbare = aktuelleListe.filter(v => v.next <= now);
+
+  if(verfügbare.length === 0){
+    return aktuelleListe[Math.floor(Math.random()*aktuelleListe.length)];
+  }
+
+  verfügbare.sort((a,b)=>a.box - b.box);
+
+  return verfügbare[0];
+}
+
+
+
+
+
+function loadLearningData(){
+  const data = localStorage.getItem("lernVokabeln");
+  if(data){
+    vokabeln = JSON.parse(data);
+  }
+}
+
+// 🔥 direkt laden beim Start
+loadLearningData();
 
 // --- Highscore ---
 function getHighscores(){ 
   return JSON.parse(localStorage.getItem("vokabelHighscores_"+aktuellerModus)||"[]"); 
 }
 
-function getNaechsteVokabel(){
 
-  let pool = vokabeln.filter(v => v !== aktuelleVokabel);
 
-  let totalWeight = pool.reduce((sum,v)=>sum+v.weight,0);
-  let rnd = Math.random() * totalWeight;
 
-  for(let v of pool){
-    rnd -= v.weight;
-    if(rnd <= 0){
-      return v;
-    }
-  }
-
-  return pool[0];
-}
 
 function saveHighscores(hs){ 
   localStorage.setItem("vokabelHighscores_"+aktuellerModus, JSON.stringify(hs)); 
@@ -1082,17 +1546,14 @@ async function updateAllHighscores(){
     else if(i === 1) klasse = "silver";
     else if(i === 2) klasse = "bronze";
 
-    let medal = ["🥇","🥈","🥉"][i] || "";
+html += `
+  <div class="highscore-item ${klasse}">
+    ${i+1}. ${e.name} — ${e.score}
+  </div>
+`;
 
-    html += `
-      <div class="highscore-item ${klasse}">
-        <div class="highscore-row">
-          <div class="medal-circle">${medal}</div>
-          <div class="highscore-name">${i+1}. ${e.name}</div>
-        </div>
-        <div class="highscore-points">${e.score} Punkte</div>
-      </div>
-    `;
+
+
   });
 
   document.getElementById("highscoreList2").innerHTML = html;
@@ -1112,36 +1573,83 @@ function showTop10Popup(name,punkte,rang){
   setTimeout(()=>{popup.style.display="none";},5000);
 }
 
-// --- Start ---
-document.getElementById("startBtn").onclick=function(){
-highscoreSchonVerarbeitet = false; // 🔥 RESET
+document.getElementById("startBtn").onclick = function(){
+loadDaily();
+updateDailyUI();
 
-// 🔥 Reset beim Start
-document.getElementById("overlay").style.display = "none";
-document.getElementById("timeOverPopup").style.display = "none";
-document.getElementById("top10Popup").style.display = "none";
-combo = 0;
-updateComboAnzeige();
-document.getElementById("gameArea").style.display = "flex";
-document.getElementById("pauseBtn").style.display = "inline-block";
-document.getElementById("gameTitle").innerText = "Vokabelspiel MA 🎮";
-document.getElementById("highscoresContainer").style.display = "block";
-document.getElementById("timerBarContainer").style.display = "block";
-document.getElementById("progressContainer").style.display = "block";
+  resetGameState();
 
-  playerName=document.getElementById("playerName").value.trim()||"Spieler";
-gesamtSpielZeit=parseInt(document.getElementById("timeSelector").value);
-aktuellerModus = gesamtSpielZeit; // 🔥 NEU
-gesamtSekunden = gesamtSpielZeit;
-document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
-  shuffleArray(level2);
-  document.getElementById("startScreen").style.display="none";
-  document.getElementById("status").style.display="flex";
-  updateLebenAnzeige(); updateAllHighscores(); startGesamtTimer(); starteFrage();
-}
+  // --- Basics ---
+  spielModus = document.getElementById("modeSelector").value;
+  playerName = document.getElementById("playerName").value.trim() || "Spieler";
+
+  gesamtSpielZeit = parseInt(document.getElementById("timeSelector").value);
+  aktuellerModus = gesamtSpielZeit;
+  gesamtSekunden = gesamtSpielZeit;
+
+  // --- Reset Arrays ---
+  aktuelleListe = [...vokabeln];
+  falschListe = [];
+  falschDetails = [];
+  wiederholModus = false;
+
+  // --- Reset Werte ---
+  punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
+  highscoreSchonVerarbeitet = false;
+
+  // --- UI Reset ---
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
+
+  document.getElementById("punkte").innerText = 0;
+  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
+
+  updateLebenAnzeige();
+  updateComboAnzeige();
+
+  // --- UI zeigen ---
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("status").style.display = "flex";
+  document.getElementById("gameArea").style.display = "flex";
+
+  document.getElementById("timerBarContainer").style.display = "block";
+  document.getElementById("progressContainer").style.display = "block";
+  document.getElementById("highscoresContainer").style.display = "block";
+
+  shuffleArray(aktuelleListe);
+
+  updateAllHighscores();
+  startGesamtTimer();
+
+// 👉 NEU: Modus anzeigen
+document.getElementById("feedback").innerText =
+  getModeIcon() + " Modus gestartet!";
+
+starteFrage();
+};
+
+
 
 // --- Timer ---
-function updateTimerBar(){document.getElementById("timerBar").style.width=(zeit/10*100)+"%";}
+function updateTimerBar(){
+
+  let maxZeit = (spielModus === "typing") ? 20 : 10;
+
+  document.getElementById("timerBar").style.width =
+    (zeit / maxZeit * 100) + "%";
+}
+function speak(text){
+  speechSynthesis.cancel(); // 🔥 stoppt alten Sound
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "es-ES";
+  speechSynthesis.speak(utter);
+}
 
 
 function startTimer(){ 
@@ -1150,8 +1658,7 @@ function startTimer(){
   clearInterval(timerID);
 
   timerID=setInterval(()=>{
-    zeit-=0.1;
-    if(zeit<0) zeit=0;
+zeit = Math.max(0, zeit - 0.1);
     updateTimerBar();
 
 if(zeit <= 0){      clearInterval(timerID); 
@@ -1165,18 +1672,17 @@ if(zeit <= 0){      clearInterval(timerID);
 
 function zeitAbgelaufen(){
 
-if(aktuelleVokabel){
-  aktuelleVokabel.weight += 2;
-}
-if(gesamtSekunden <= 0) return;
-const correct = aktuelleVokabel.deutsch;
 
+if(gesamtSekunden <= 0) return;
+if(!aktuelleVokabel) return;
+const correct = aktuelleVokabel.deutsch.join(" / "); // 🔥 FIX
 
 
   document.getElementById("overlay").style.display="block";
   const popup=document.getElementById("timeOverPopup");
   popup.innerHTML=`⏰ Zeit abgelaufen!<br>Richtige Antwort: <span class="correct-answer-highlight">${correct}</span>`;
   popup.style.display="block";
+popup.className = "popup-error";
 
 setTimeout(()=>{
   document.getElementById("overlay").style.display="none";
@@ -1187,9 +1693,11 @@ setTimeout(()=>{
 combo = 0;
 updateComboAnzeige();
 
-  if(leben <= 0){
-    spielZurücksetzen();
-  } else {
+if(leben <= 0){
+  spielBeenden();
+}
+
+ else {
     nächsteFrage();
   }
 
@@ -1223,7 +1731,7 @@ function updateComboAnzeige(){
 
 function startGesamtTimer(){ 
 
-  if(gesamtTimerLaeuft) return; // ❗ verhindert doppelten Timer
+  clearInterval(gesamtTimerID); // 🔥 WICHTIG!
 
   gesamtTimerLaeuft = true;
 
@@ -1235,178 +1743,286 @@ document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden)
 
 if(gesamtSekunden <= 0){
 
-clearInterval(timerID);   // 🔥 STOPPT Frage-Timer!
-      clearInterval(gesamtTimerID);
-      gesamtTimerLaeuft = false;
+  clearInterval(timerID);
+  clearInterval(gesamtTimerID);
+  gesamtTimerLaeuft = false;
+  spielBeenden();   // 🔥 DAS FEHLT
 
-      document.getElementById("overlay").style.display="block";
-      const popup=document.getElementById("timeOverPopup");
-      popup.innerHTML=`⏰ Gesamtzeit abgelaufen!<br>Punkte: ${punkte}`;
-      popup.style.display="block";
+  return;           // 🔥 verhindert weiteres Ausführen
 
-    setTimeout(()=>{
-
-  // ✅ ALLE POPUPS sauber schließen
-  document.getElementById("overlay").style.display = "none";
-  document.getElementById("timeOverPopup").style.display = "none";
-  document.getElementById("top10Popup").style.display = "none";
-  document.getElementById("feedback").innerText = "";
-
-  addHighscore(playerName,punkte);
-
-        punkte=0; 
-        aktuelleFrage=0; 
-        leben=3; 
-gesamtSekunden = gesamtSpielZeit;
-        document.getElementById("punkte").innerText=0; 
-document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden)
-        updateLebenAnzeige(); 
-// 👉 Spiel ausblenden + zurück zum Start
-document.getElementById("gameArea").style.display = "none";
-document.getElementById("status").style.display = "none";
-document.getElementById("startScreen").style.display = "flex";
-  
-
-      },4000);
     }
 
   },1000);
 }
 
-// --- Highscore Funktionen ---
 function addHighscore(name,punkte){
-addHighscoreOnline(name, punkte);
-  let hs=getHighscores();
-  hs.push({name,punkte}); hs.sort((a,b)=>b.punkte-a.punkte);
-  if(hs.length>10) hs=hs.slice(0,10);
-  saveHighscores(hs); updateAllHighscores();
 
+  addHighscoreOnline(name, punkte);
 
+  let hs = getHighscores();
 
-let rang = hs.findIndex(e => e.name === name && e.score === punkte) + 1;
+  hs.push({name, punkte});
+  hs.sort((a,b)=>b.punkte-a.punkte);
 
-// 👉 NUR Top 3 reagieren
-if(rang > 0 && rang <= 3){
+  if(hs.length>10) hs = hs.slice(0,10);
 
-  // ❗ nur einmal pro Spiel
-  if(highscoreSchonVerarbeitet) return;
-  highscoreSchonVerarbeitet = true;
+  saveHighscores(hs);
+  updateAllHighscores();
 
-  // 🥇 Platz 1
-  if(rang === 1){
+  let rang = hs.findIndex(e => e.name === name && e.punkte === punkte) + 1;
+
+  // 🥇 Platz 1 → MIT Elefant
+  if(rang === 1 && !highscoreSchonVerarbeitet){
+
+    highscoreSchonVerarbeitet = true;
+
+    console.log("👑 Platz 1 → Elefant!");
 
     jubelChoreo();
 
     document.getElementById("feedback").innerText = "👑 PLATZ 1!!!";
-
-    const game = document.getElementById("gameArea");
-    game.classList.add("flash");
-
-    setTimeout(()=>{
-      game.classList.remove("flash");
-    },500);
-
   }
 
-  // 🥈🥉 Platz 2–3
-  else {
-
-    jubelChoreo();
+  // 🥈🥉 Platz 2–3 → OHNE Elefant
+  else if(rang === 2 || rang === 3){
 
     document.getElementById("feedback").innerText = "🏆 TOP 3!";
   }
-}
+
+
+
 
 // 👉 Top 10 Popup bleibt IMMER
 if(rang > 0 && rang <= 10){
   showTop10Popup(name, punkte, rang);
 }
-
-
-
 }
 
-// --- Spiel zurücksetzen ---
+
 function spielZurücksetzen(){
 
-// ✅ EINMAL reicht komplett
-document.getElementById("overlay").style.display = "none";
-document.getElementById("timeOverPopup").style.display = "none";
-document.getElementById("top10Popup").style.display = "none";
-document.getElementById("feedback").innerText = "";
+  resetGameState();
 
-clearInterval(gesamtTimerID);
+  addHighscore(playerName, punkte);
 
-addHighscore(playerName,punkte); 
+  // Reset Werte
+  punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
 
+  // UI Reset
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
 
+  document.getElementById("punkte").innerText = 0;
+  document.getElementById("gesamtzeit").innerText = formatZeit(0);
 
-  punkte=0; 
-  aktuelleFrage=0; 
-  leben=3; 
-
-  document.getElementById("punkte").innerText=punkte; 
-document.getElementById("gesamtzeit").innerText = formatZeit(0);
   updateLebenAnzeige();
-document.getElementById("gameArea").style.display = "none";
-document.getElementById("status").style.display = "none";
-document.getElementById("startScreen").style.display = "flex";
+  updateComboAnzeige();
 
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("status").style.display = "none";
+  document.getElementById("startScreen").style.display = "flex";
 }
 
-// --- Frage ---
+
+
 function starteFrage(){
-  clearInterval(timerID);
 
-  zeit = 10; // ✅ NEU
+  try {
 
-  document.getElementById("feedback").innerText="";
-  document.getElementById("antworten").innerHTML="";
-  updateProgress();
+    if(!aktuelleListe || aktuelleListe.length === 0){
+      console.warn("⚠️ Keine Fragen mehr");
+      spielBeenden();
+      return;
+    }
 
-  if(aktuelleFrage>=level2.length) aktuelleFrage=0;
-
-const w = getNaechsteVokabel();
-aktuelleVokabel = w;
-  // 👉 Spanisches Verb anzeigen
-  document.getElementById("wort").innerHTML = `
-<div class="wort-box">${w.spanisch}</div>  `;
-
-  // 👉 Richtige + falsche Antworten erzeugen
-let antworten = [w.deutsch];
-  while(antworten.length < 4){
-let random = vokabeln[Math.floor(Math.random()*vokabeln.length)].deutsch;
-    if(!antworten.includes(random)) antworten.push(random);
-  }
-
-  shuffleArray(antworten);
-
-  antworten.forEach(a=>{
-    const btn = document.createElement("button");
-    btn.innerText = a;
-
-btn.onclick = ()=>checkAntwort(a, w.deutsch);
-    document.getElementById("antworten").appendChild(btn);
-  });
-
-  startTimer();
+if(spielModus !== "learn" && aktuelleFrage >= aktuelleListe.length){
+  spielBeenden();
+  return;
 }
 
+    clearInterval(timerID);
 
+let w;
+
+if(spielModus === "learn"){
+  w = nächsteLernVokabel();
+} else {
+  w = aktuelleListe[aktuelleFrage];
+}
+    if(!w || !w.spanisch || !w.deutsch){
+      console.error("❌ Ungültige Vokabel:", w);
+      nächsteFrage();
+      return;
+    }
+
+// 👉 Nur bei neuer Frage zurücksetzen
+if(!aktuelleVokabel || aktuelleVokabel !== w){
+  antwortAngezeigt = false;
+}
+
+aktuelleVokabel = w;
+
+
+
+  // UI Reset
+document.getElementById("antworten").innerHTML = "";
+
+// 👉 UI Modus
+if(spielModus === "typing"){
+  document.getElementById("inputAntwort").style.display = "block";
+  document.getElementById("ankiButtons").style.display = "none";
+  document.getElementById("textAntwort").focus();
+
+} else if(spielModus === "learn"){
+  document.getElementById("inputAntwort").style.display = "none";
+  document.getElementById("ankiButtons").style.display = "none"; // ❌ verstecken
+  document.getElementById("hintContainer").style.display = "block"; // 💡 zeigen
+
+} else {
+  document.getElementById("inputAntwort").style.display = "none";
+  document.getElementById("ankiButtons").style.display = "none";
+}
+    // Fortschritt SAFE
+    updateProgressSafe();
+
+  const spanischText = (w.spanisch || []).join(" / ");
+const level = "⭐".repeat(w.box || 1);
+
+let html = `<div class="wort-box">${spanischText}<br><small>${level}</small>`;
+
+if(spielModus === "learn" && antwortAngezeigt){
+  html += `<div class="deutsches-wort">${w.deutsch.join(" / ")}</div>`;
+}
+
+html += `</div>`;
+
+document.getElementById("wort").innerHTML = html;
+
+
+    speak(spanischText);
+
+    // Antworten bauen
+    let antworten = [...w.deutsch];
+
+    while(antworten.length < 4){
+      let randomV = aktuelleListe[Math.floor(Math.random()*aktuelleListe.length)];
+
+      if(!randomV || !randomV.deutsch) continue;
+
+      let random = randomV.deutsch[Math.floor(Math.random()*randomV.deutsch.length)];
+
+      if(random && !antworten.includes(random)){
+        antworten.push(random);
+      }
+    }
+
+    shuffleArray(antworten);
+
+    if(spielModus === "multiple"){
+      antworten.forEach(a=>{
+        const btn = document.createElement("button");
+        btn.innerText = a;
+        btn.onclick = ()=>checkAntwort(a, w.deutsch);
+        document.getElementById("antworten").appendChild(btn);
+      });
+    }
+
+    zeit = (spielModus === "typing") ? 20 : 10;
+    startTimer();
+
+  } catch(err){
+    console.error("💥 Fehler in starteFrage:", err);
+    nächsteFrage(); // 🔥 verhindert Freeze
+  }
+}
+
+function updateProgressSafe(){
+if(spielModus === "learn"){
+  document.getElementById("fortschrittText").innerText = "🧠 Lernen";
+  return;
+}
+
+  try {
+
+    if(!aktuelleListe) return;
+
+    const bar = document.getElementById("progressBar");
+    const el = document.getElementById("fortschrittText");
+
+    if(!bar || !el) return;
+
+    const total = aktuelleListe.length || 1;
+    const current = Math.min(aktuelleFrage + 1, total);
+
+    const pr = (current / total) * 100;
+    bar.style.width = pr + "%";
+
+    if(wiederholModus){
+      el.innerText = "🔁 Fehler: " + current + " / " + total;
+    } else {
+      el.innerText = "📚 " + current + " / " + total;
+    }
+
+  } catch(err){
+    console.error("💥 Progress Fehler:", err);
+  }
+}
 
 // --- Antwort prüfen ---
-function checkAntwort(eingabe,richtig){
-  if(isPaused) return; // ❗ NEU
+function checkAntwort(eingabe, richtigListe){
+
+  if(isPaused) return;
 
   clearInterval(timerID);
-  if(eingabe===richtig) richtigAntwort();
-  else falschAntwort(richtig);
+
+  if(richtigListe.includes(eingabe)){
+    richtigAntwort();
+  } else {
+    falschAntwort(richtigListe.join(" / "));
+  }
+}
+
+function checkTextAntwort(){
+
+  if(isPaused) return;
+
+  clearInterval(timerID);
+
+  const input = document.getElementById("textAntwort");
+  let eingabe = input.value.trim().toLowerCase();
+
+  input.value = "";
+
+  if(!eingabe) return;
+
+  let korrektListe = aktuelleVokabel.deutsch.map(w => w.toLowerCase());
+
+  if(korrektListe.includes(eingabe)){
+    richtigAntwort();
+  } else {
+    falschAntwort(aktuelleVokabel.deutsch.join(" / "));
+  }
 }
 
 function richtigAntwort(){
-if(aktuelleVokabel){
-  aktuelleVokabel.weight = Math.max(1, aktuelleVokabel.weight - 1);
+if(spielModus === "learn"){
+  aktuelleVokabel.box = Math.min(5, aktuelleVokabel.box + 1);
+
+  let delay = [0, 5, 20, 60, 300, 900];
+
+  aktuelleVokabel.next = Date.now() + delay[aktuelleVokabel.box]*1000;
+
+  saveLearningData();
+  updateDailyProgress(); // kommt gleich
 }
+falschListe = falschListe.filter(v => 
+  v.spanisch.join() !== aktuelleVokabel.spanisch.join()
+);
 
   let bonus = 0;
 
@@ -1460,18 +2076,45 @@ if(megaMode){
 
 
 
-
+function getModeIcon(){
+  if(spielModus === "learn") return "💡";
+  if(spielModus === "multiple") return "🎯";
+  if(spielModus === "typing") return "⌨️";
+}
 
 
 function falschAntwort(richtig){
-if(aktuelleVokabel){
-  aktuelleVokabel.weight += 3;
+if(spielModus === "learn"){
+  aktuelleVokabel.box = 1;
+  aktuelleVokabel.next = Date.now() + 2000;
+
+  saveLearningData();
 }
+
+if(!falschListe.some(v => 
+  v.spanisch.join() === aktuelleVokabel.spanisch.join()
+)){
+  falschListe.push({
+    spanisch: [...aktuelleVokabel.spanisch],
+    deutsch: [...aktuelleVokabel.deutsch]
+  });
+}
+
+
+// 👉 NEU: falsche Antwort speichern
+
+
 combo = 0;
 updateComboAnzeige();
   leben--; 
 
-
+// 👉 NEU: nur einmal speichern
+if(!falschDetails.some(f => f.frage === aktuelleVokabel.spanisch.join(" / "))){
+  falschDetails.push({
+    frage: aktuelleVokabel.spanisch.join(" / "),
+    richtig: richtig
+  });
+}
 updateLebenAnzeige(); 
   const popup=document.getElementById("timeOverPopup");
   document.getElementById("overlay").style.display="block";
@@ -1481,6 +2124,8 @@ popup.innerHTML=`
 <span class="correct-answer-highlight">${richtig}</span>
 `;
 
+popup.className = "";
+popup.classList.add("popup-error");
 popup.style.display="block";
 
 
@@ -1490,45 +2135,22 @@ playSound("falsch");
 
   setTimeout(()=>{
     document.getElementById("overlay").style.display="none"; popup.style.display="none";
-    if(leben<=0) spielZurücksetzen(); else nächsteFrage();
+if(leben <= 0){
+  spielBeenden();   // 🔥 statt zurücksetzen
+} else {
+  nächsteFrage();
+}
   },1000);
 }
 
 
-function nächsteFrage(){aktuelleFrage++; starteFrage();}
-function updateProgress(){ 
-  const total = level2.length;
-  const current = aktuelleFrage + 1;
+function nächsteFrage(){
 
-  const pr = (current / total) * 100;
-  document.getElementById("progressBar").style.width = pr + "%";
-
-  const el = document.getElementById("fortschrittText");
-
-  let remaining = total - current;
-
-  // 👉 Text
-  if(remaining <= 5){
-    el.innerText = "🔥 FAST FERTIG! " + current + " / " + total;
-  } else {
-    el.innerText = "📚 " + current + " / " + total;
+  if(spielModus !== "learn"){
+    aktuelleFrage++;
   }
 
-  // 👉 Farben reset
-  el.classList.remove("progress-low","progress-mid","progress-high");
-
-  if(pr < 40){
-    el.classList.add("progress-low");
-  } else if(pr < 80){
-    el.classList.add("progress-mid");
-  } else {
-    el.classList.add("progress-high");
-  }
-
-  // 👉 Animation
-  el.classList.remove("pop");
-  void el.offsetWidth;
-  el.classList.add("pop");
+  starteFrage();
 }
 
 
@@ -1603,6 +2225,127 @@ playSound("richtig");
   }, 4000);
 }
 
+function loadDaily(){
+  const data = JSON.parse(localStorage.getItem("dailyStats") || "{}");
+
+  dailyDone = data.done || 0;
+  streak = data.streak || 0;
+
+  let today = new Date().toDateString();
+
+if(data.date !== today){
+
+  // 👉 neuer Tag → reset oder Streak verlieren
+  if(data.date){
+    streak = 0;
+  }
+
+  dailyDone = 0;
+
+  localStorage.setItem("dailyStats", JSON.stringify({
+    done: dailyDone,
+    streak: streak,
+    date: today
+  }));
+}
+}
+
+function saveDaily(){
+  localStorage.setItem("dailyStats", JSON.stringify({
+    done: dailyDone,
+    streak: streak,
+    date: new Date().toDateString()
+  }));
+}
+
+function updateDailyProgress(){
+
+  dailyDone++;
+
+  // 👉 NEU: sofort Streak erhöhen
+  if(dailyDone === dailyGoal){
+    streak++;
+
+    document.getElementById("feedback").innerText =
+      "🔥 Streak +1! (" + streak + ")";
+  }
+
+  saveDaily();
+  updateDailyUI();
+}
+
+function updateDailyUI(){
+  const el = document.getElementById("dailyBox");
+  if(el){
+    el.innerText = "🎯 " + dailyDone + " / " + dailyGoal + " | 🔥 " + streak;
+  }
+}
+function ankiAnswer(type){
+
+  if(isPaused) return;
+
+  clearInterval(timerID);
+
+  let delay = [0, 5, 20, 60, 300, 900];
+
+  // ❌ Wiederholen
+  if(type === "again"){
+    aktuelleVokabel.box = 1;
+    aktuelleVokabel.next = Date.now() + 2000;
+    combo = 0;
+  }
+
+  // 😬 Schwer
+  else if(type === "hard"){
+    aktuelleVokabel.box = Math.max(1, aktuelleVokabel.box);
+    aktuelleVokabel.next = Date.now() + delay[aktuelleVokabel.box] * 500;
+  }
+
+  // 🙂 Gut (Standard)
+  else if(type === "good"){
+    aktuelleVokabel.box = Math.min(5, aktuelleVokabel.box + 1);
+    aktuelleVokabel.next = Date.now() + delay[aktuelleVokabel.box] * 1000;
+    combo++;
+  }
+
+  // 🚀 Easy (Skip-Level)
+  else if(type === "easy"){
+    aktuelleVokabel.box = Math.min(5, aktuelleVokabel.box + 2);
+    aktuelleVokabel.next = Date.now() + delay[aktuelleVokabel.box] * 1500;
+    combo += 2;
+  }
+
+  updateComboAnzeige();
+  saveLearningData();
+  updateDailyProgress();
+
+  // kleines Feedback
+  document.getElementById("feedback").innerText = "🧠 gespeichert";
+
+  setTimeout(()=>{
+    nächsteFrage();
+  }, 200);
+}
+
+function highlightErrors(lines, errorLines){
+
+  const layer = document.getElementById("highlightLayer");
+
+  let html = "";
+
+  lines.forEach((line, index) => {
+
+    if(errorLines.includes(index)){
+      html += `<span class="error-line">${line || " "}</span>\n`;
+    } else {
+      html += line + "\n";
+    }
+
+  });
+
+  layer.innerHTML = html;
+}
+
 function positioniereElefant(){
 
   const box = document.querySelector(".start-box") 
@@ -1615,15 +2358,305 @@ function positioniereElefant(){
   const rect = box.getBoundingClientRect();
 
   // 👉 rechts neben Box
-  const x = rect.right + 1300;
-
+const x = Math.min(rect.right + 20, window.innerWidth - 220);
   elefant.style.left = x + "px";
 }
 
 window.jubelChoreo = jubelChoreo;
 
 window.addEventListener("resize", positioniereElefant);
+
 window.addEventListener("load", positioniereElefant);
+
+// 🔥 AUTO-LOAD CUSTOM VOCAB
+window.addEventListener("load", () => {
+  const data = localStorage.getItem("customVocab");
+
+  if(data){
+    vokabeln = JSON.parse(data);
+
+    // 🔥 HIER ist dein Zusatz
+    document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
+
+    console.log("📂 Custom Vokabeln automatisch geladen");
+  }
+});
+
+
+document.getElementById("saveCustomBtn").onclick = function(){
+
+  const input = document.getElementById("customVocabInput").value.trim();
+
+  if(!input){
+    alert("Bitte Vokabeln eingeben!");
+    return;
+  }
+
+  const lines = input.split("\n");
+
+  let customList = [];
+let errors = [];
+let errorLines = []; // 👈 NEU
+lines.forEach((line, index) => {
+
+  line = line.trim();
+  if(!line) return;
+
+  let spanischListe = [];
+  let deutschListe = [];
+
+  // 👉 FALL 1: MIT Bindestrich
+  if(line.includes("-")){
+
+    let parts = line.split(/\s*-\s*/);
+
+    if(parts.length < 2){
+      errors.push(`Zeile ${index+1}: Trennung mit "-" fehlerhaft`);
+errorLines.push(index); // 👈 NEU
+      return;
+    }
+
+    spanischListe = parts[0].split("/").map(w => w.trim()).filter(w => w);
+    deutschListe = parts[1].split("/").map(w => w.trim()).filter(w => w);
+
+  }
+
+  // 👉 FALL 2: OHNE Bindestrich
+  else {
+
+    let parts = line.split(/\s+/);
+
+if(parts.length < 2){
+  errors.push(`Zeile ${index+1}: Kein deutsches Wort gefunden`);
+  errorLines.push(index);
+  return;
+}
+
+    let spanischRaw = parts.shift();
+    let deutschRaw = parts.join(" ");
+
+    spanischListe = spanischRaw.split("/").map(w => w.trim()).filter(w => w);
+    deutschListe = deutschRaw.split("/").map(w => w.trim()).filter(w => w);
+  }
+
+  // 👉 EXTRA CHECK
+  if(spanischListe.length === 0 || deutschListe.length === 0){
+    errors.push(`Zeile ${index+1}: Leere Vokabel`);
+errorLines.push(index); // 👈 NEU
+    return;
+  }
+
+  customList.push({
+    spanisch: spanischListe,
+    deutsch: deutschListe,
+  });
+
+});
+highlightErrors(lines, errorLines);
+// 👇 GENAU HIER EINFÜGEN
+if(errors.length > 0){
+  alert("❌ Fehler gefunden:\n\n" + errors.join("\n"));
+  return;
+}
+
+if(customList.length === 0){
+  alert("❌ Keine gültigen Vokabeln gefunden!");
+  return;
+}
+
+
+  // 💾 speichern
+  localStorage.setItem("customVocab", JSON.stringify(customList));
+
+  // 🔥 NEU: direkt aktivieren
+  vokabeln = customList;
+
+  // 🔥 optional: Titel ändern
+  document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
+
+  alert("✅ Vokabeln gespeichert & aktiviert!");
+};
+
+
+
+
+// --- ZURÜCK ZU STANDARD ---
+document.getElementById("useDefaultBtn").onclick = function(){
+
+  vokabeln = level2.map(v => ({
+    spanisch: v[0].split("/"),
+    deutsch: v[1].split("/"),
+    box: 1,
+    next: 0
+  }));
+
+  alert("🔄 Standard-Vokabeln aktiv!");
+};
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "e"){
+    console.log("TEST: Elefant wird ausgelöst");
+    jubelChoreo();
+  }
+});
+document.getElementById("checkBtn").onclick = checkTextAntwort;
+
+document.getElementById("textAntwort").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){
+    checkTextAntwort();
+  }
+});
+
+document.getElementById("hintBtn").onclick = function(){
+
+  if(!aktuelleVokabel) return;
+
+  antwortAngezeigt = true;
+
+  const w = aktuelleVokabel;
+
+  const spanischText = w.spanisch.join(" / ");
+  const level = "⭐".repeat(w.box || 1);
+
+  let html = `<div class="wort-box">${spanischText}<br><small>${level}</small>`;
+  html += `<div class="deutsches-wort">${w.deutsch.join(" / ")}</div>`;
+  html += `</div>`;
+
+  document.getElementById("wort").innerHTML = html;
+
+  // 👉 Buttons zeigen
+  document.getElementById("ankiButtons").style.display = "flex";
+
+  // 👉 Glühbirne verstecken
+  document.getElementById("hintContainer").style.display = "none";
+
+  clearInterval(timerID);
+};
+function restartGame(){
+
+  // Spiel sauber resetten
+  resetGameState();
+
+  // UI schließen
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+
+  // Werte zurücksetzen
+  punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
+  highscoreSchonVerarbeitet = false;
+
+  falschListe = [];
+  falschDetails = [];
+  wiederholModus = false;
+
+  // Liste neu mischen
+  aktuelleListe = [...vokabeln];
+  shuffleArray(aktuelleListe);
+
+  // UI reset
+  document.getElementById("punkte").innerText = 0;
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSpielZeit);
+
+  updateLebenAnzeige();
+  updateComboAnzeige();
+
+  // Timer neu setzen (WICHTIG!)
+  gesamtSekunden = gesamtSpielZeit;
+
+  // 👉 Modus anzeigen
+  document.getElementById("feedback").innerText =
+    getModeIcon() + " Neues Spiel gestartet!";
+
+  // Highscores neu laden
+  updateAllHighscores();
+
+  // Spiel starten
+  startGesamtTimer();
+  starteFrage();
+}
+
+function spielBeenden(){
+const popup = document.getElementById("timeOverPopup");
+if(!wiederholModus){
+  addHighscore(playerName, punkte);
+}
+isPaused = false;
+gesamtTimerLaeuft = false;
+console.log("FEHLER LISTE:", falschDetails);
+
+  clearInterval(timerID);
+  clearInterval(gesamtTimerID);
+
+  let html = "<h2>🏁 Spiel beendet!</h2>";
+
+  if(falschDetails.length === 0){
+    html += "<p>🎉 Alles richtig!</p>";
+  } else {
+    html += "<p>❌ Deine Fehler:</p>";
+
+    falschDetails.forEach(f => {
+      html += `
+        <div style="margin:10px 0;">
+          <b>${f.frage}</b><br>
+          ➜ ${f.richtig}
+        </div>
+      `;
+    });
+  }
+
+html += `<br><b>Punkte: ${punkte}</b>`;
+html += `<br><br>`;
+
+
+
+html += `
+  <div class="popupBtnRow">
+    <button class="popupBtn" onclick="spielZurücksetzen()">🏠 Menü</button>
+<button class="popupBtn replayBtn" onclick="restartGame()">🔄 Nochmal</button>  </div>
+`;
+
+popup.className = "";
+popup.classList.add("popup-end");
+  popup.innerHTML = html;
+
+  document.getElementById("overlay").style.display = "block";
+  popup.style.display = "block";
+}  
+
+document.getElementById("wort").onclick = function(){
+
+  if(spielModus !== "learn") return;
+
+  if(!antwortAngezeigt){
+
+    antwortAngezeigt = true;
+
+    // 👉 NUR neu rendern – KEINE neue Frage!
+    const w = aktuelleVokabel;
+
+    const spanischText = w.spanisch.join(" / ");
+    const level = "⭐".repeat(w.box || 1);
+
+    let html = `<div class="wort-box">${spanischText}<br><small>${level}</small>`;
+    html += `<div class="deutsches-wort">${w.deutsch.join(" / ")}</div>`;
+    html += `</div>`;
+
+    document.getElementById("wort").innerHTML = html;
+
+    // ⏹ Timer stoppen
+    clearInterval(timerID);
+  }
+};
+
+
+
+
+
+
 
 </script>
 
