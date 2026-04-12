@@ -4,6 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Unregelmäßige Verben - Vokabelspiel MA</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <style>
 body { font-family:'Segoe UI',sans-serif; text-align:center; margin:0; padding:0; transition: background 0.5s;}
 h1 { margin-top:20px; transition: color 0.5s;}
@@ -11,7 +12,8 @@ h1 { margin-top:20px; transition: color 0.5s;}
 #status { display:flex; justify-content:center; gap:20px; margin:20px;   align-items: center;   /* 🔥 sorgt für gleiche Höhe */
 
 
-transition: background 0.5s; flex-wrap:wrap;}
+transition: background 0.5s;
+ flex-wrap:wrap;}
 
 /* --- Boxen zentriert --- */
 .box {
@@ -29,6 +31,71 @@ transition:all 0.5s;
   min-width: 140px;       /* 🔥 optional: gleiche Breite */
   line-height: 1;              /* 🔥 WICHTIG */
 
+}
+#themeToggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 20px;
+
+  padding: 8px 12px;
+  border-radius: 12px;
+
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.2);
+
+  z-index: 9999;
+}
+#themeToggle:hover {
+  transform: scale(1.05);
+}
+/* Switch */
+.switch {
+  position: relative;
+  width: 60px;
+  height: 30px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ffd54f, #ff9800);
+  border-radius: 30px;
+  width: 100%;
+  height: 100%;
+  transition: 0.4s;
+  box-shadow: 0 0 10px rgba(255,152,0,0.6);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+
+/* aktiv = Nacht */
+.switch input:checked + .slider {
+  background: linear-gradient(135deg, #3f51b5, #1a237e);
+  box-shadow: 0 0 12px rgba(63,81,181,0.8);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(30px);
 }
 
 #wort {
@@ -198,7 +265,7 @@ position: relative;
 #highscoresContainer {
   position: fixed;   /* 👈 statt absolute */
   right: 20px;
-  top: 40px;         /* 👈 frei einstellbar */
+  top: 120px;         /* 👈 frei einstellbar */
   z-index: 999;
 }
 
@@ -640,6 +707,8 @@ font-size:32px;
   grid-template-columns: 220px 1fr; /* 🔥 feste Label-Breite */
   align-items: center;
   gap: 20px;
+  transform: translateX(60px); /* 👉 nach rechts schieben */
+
 
   width: 100%;
   font-size: 20px;
@@ -737,11 +806,18 @@ font-size:32px;
 
 /* 🔄 Optional: anderer Look für "Nochmal" */
 .replayBtn {
-  background: linear-gradient(135deg, #2196f3, #0d47a1);
+  background: linear-gradient(135deg, #2196f3, #1565c0) !important;
+  color: white;
+
   box-shadow: 0 6px 20px rgba(33,150,243,0.6);
+
+  border: none;
 }
 
-
+.replayBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 30px rgba(33,150,243,0.9);
+}
 
 
 /* --- Tag/Nacht Styles --- */
@@ -931,6 +1007,10 @@ filter: brightness(1.2);
 .button-group {
   display: flex;
   flex-direction: column;
+
+  transform: translateX(10px); /* 👉 nach rechts */
+
+
   gap: 12px;
   margin-top: 10px;
 }
@@ -999,6 +1079,8 @@ filter: brightness(1.2);
 .input-row {
   display: flex;
   gap: 80px;
+  transform: translateX(-50px); /* 👉 Wert anpassen */
+
   min-height: 240px;   /* 🔥 sorgt für mehr „Block-Gefühl“ */
 
   align-items: flex-start;
@@ -1011,7 +1093,13 @@ filter: brightness(1.2);
 
 }
 
+.button-group button:hover {
+  box-shadow: 0 0 25px rgba(76,175,80,0.9);
+  transform: scale(1.1) rotate(-1deg);
 
+  transition: all 0.3s ease;
+
+}
 
 @media (max-width: 600px) {
 
@@ -1041,7 +1129,9 @@ filter: brightness(1.2);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: 220px;
+  margin-left: -20px; /* 👉 Wert anpassen */
+
+  width: 300px;
 }
 
 #hintContainer {
@@ -1073,11 +1163,18 @@ filter: brightness(1.2);
   box-shadow: 0 12px 35px rgba(255,152,0,0.9);
 }
 
+.fehler-trenner {
+  height: 2px;
+  background: linear-gradient(to right, transparent, #444, transparent);
+  margin: 15px 0;
+}
+
 .button-group button {
   width: 100%;
   margin-top: 0;
- background: #4caf50;
+  background: #4caf50;
   color: white;
+  transition: all 0.3s ease; /* 🔥 DAS FEHLT */
 }
 
 #saveCustomBtn {
@@ -1089,6 +1186,31 @@ filter: brightness(1.2);
   background: #ffeb3b;   /* 🟡 gelb */
   color: black;
 }
+/* 🌙 INPUT im Nachtmodus */
+.night #textAntwort,
+.night #customVocabInput {
+  background: #2a2a40;
+  color: #ffffff;
+  border: 2px solid #555;
+}
+
+/* Placeholder auch hell */
+.night #textAntwort::placeholder,
+.night #customVocabInput::placeholder {
+  color: #bbbbbb;
+}
+
+/* Fokus im Dark Mode */
+.night #textAntwort:focus,
+.night #customVocabInput:focus {
+  border-color: #448aff;
+  box-shadow: 0 0 12px rgba(68,138,255,0.7);
+}
+
+
+
+
+
 
 </style>
 
@@ -1099,11 +1221,6 @@ filter: brightness(1.2);
 
 <img src="logo.png" id="logo">
 <h1 id="gameTitle">Vokabelspiel MA 🎮</h1>
-
-<select id="themeSelector">
-<option value="day">Tagesmodus</option>
-<option value="night">Nachtmodus</option>
-</select>
 
 <div id="startScreen">
 
@@ -1149,11 +1266,15 @@ vivir leben/wohnen
 ser/estar sein"></textarea>
   </div>
 
-  <div class="button-group">
-    <button id="saveCustomBtn">💾 Vokabeln speichern</button>
-    <button id="useDefaultBtn">🔄 Standard nutzen</button>
-    <button id="startBtn">▶ Spiel starten</button>
-  </div>
+<div class="button-group">
+  <button id="startCustomBtn">📚 START mit <br>eigenen Vokabeln</button>
+  <button id="startDefaultBtn">🔄 START mit <br>Standard-Vokabeln</button>
+<input type="file" id="excelFile" accept=".xlsx,.xls">
+</div>
+
+
+
+
 
 </div>
 
@@ -1213,7 +1334,14 @@ ser/estar sein"></textarea>
   <div id="timerBar"></div>
 </div>
 
-
+<div id="themeToggle">
+<span id="themeIcon">☀️</span>
+ <label class="switch">
+    <input type="checkbox" id="themeSwitch">
+    <span class="slider"></span>
+  </label>
+  <span>🌙</span>
+</div>
 
 <div id="progressContainer" style="display:none;">
   <div id="progressBar" class="level2"></div>
@@ -1228,10 +1356,10 @@ ser/estar sein"></textarea>
 
 <!-- 🧠 ANKI BUTTONS -->
 <div id="ankiButtons" style="display:none; margin-top:20px;">
-  <button onclick="ankiAnswer('again')">❌ Wiederholen</button>
-  <button onclick="ankiAnswer('hard')">😬 Schwer</button>
-  <button onclick="ankiAnswer('good')">🙂 Gut</button>
-  <button onclick="ankiAnswer('easy')">🚀 Easy</button>
+  <button onclick="ankiAnswer('again')">💀 noch nie gesehen</button>
+  <button onclick="ankiAnswer('hard')">😅 dachte ich mir</button>
+  <button onclick="ankiAnswer('good')">🔥 wusste ich</button>
+  <button onclick="ankiAnswer('easy')">🚀 nicht mehr zeigen</button>
 </div>
 <div id="inputAntwort" style="display:none;">
   <input id="textAntwort" placeholder="Antwort eingeben..." />
@@ -1409,7 +1537,6 @@ document.getElementById("pauseBtn").onclick = function(){
     this.innerText = "⏸";
   }
 };
-document.getElementById("themeSelector").addEventListener("change", e=>{document.body.className=e.target.value;});
 
 // --- Shuffle ---
 function shuffleArray(array){ for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]];}}
@@ -1455,8 +1582,8 @@ let aktuelleListe = [];
 
 let combo = 0;
 let highscoreSchonVerarbeitet = false; // 🔥 NEU
-let aktuellerModus = 60; // 🔥 NEU
-let isPaused = false;
+let aktuellerModus = "multiple"; // oder learn / typing
+let aktuelleZeit = 60;let isPaused = false;
 let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
 let gesamtTimerLaeuft = false;
 // 🧠 SPACED REPETITION SPEICHERN
@@ -1573,65 +1700,6 @@ function showTop10Popup(name,punkte,rang){
   setTimeout(()=>{popup.style.display="none";},5000);
 }
 
-document.getElementById("startBtn").onclick = function(){
-loadDaily();
-updateDailyUI();
-
-  resetGameState();
-
-  // --- Basics ---
-  spielModus = document.getElementById("modeSelector").value;
-  playerName = document.getElementById("playerName").value.trim() || "Spieler";
-
-  gesamtSpielZeit = parseInt(document.getElementById("timeSelector").value);
-  aktuellerModus = gesamtSpielZeit;
-  gesamtSekunden = gesamtSpielZeit;
-
-  // --- Reset Arrays ---
-  aktuelleListe = [...vokabeln];
-  falschListe = [];
-  falschDetails = [];
-  wiederholModus = false;
-
-  // --- Reset Werte ---
-  punkte = 0;
-  aktuelleFrage = 0;
-  leben = 3;
-  combo = 0;
-  highscoreSchonVerarbeitet = false;
-
-  // --- UI Reset ---
-  document.getElementById("overlay").style.display = "none";
-  document.getElementById("timeOverPopup").style.display = "none";
-  document.getElementById("top10Popup").style.display = "none";
-  document.getElementById("feedback").innerText = "";
-
-  document.getElementById("punkte").innerText = 0;
-  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
-
-  updateLebenAnzeige();
-  updateComboAnzeige();
-
-  // --- UI zeigen ---
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("status").style.display = "flex";
-  document.getElementById("gameArea").style.display = "flex";
-
-  document.getElementById("timerBarContainer").style.display = "block";
-  document.getElementById("progressContainer").style.display = "block";
-  document.getElementById("highscoresContainer").style.display = "block";
-
-  shuffleArray(aktuelleListe);
-
-  updateAllHighscores();
-  startGesamtTimer();
-
-// 👉 NEU: Modus anzeigen
-document.getElementById("feedback").innerText =
-  getModeIcon() + " Modus gestartet!";
-
-starteFrage();
-};
 
 
 
@@ -1661,9 +1729,11 @@ function startTimer(){
 zeit = Math.max(0, zeit - 0.1);
     updateTimerBar();
 
-if(zeit <= 0){      clearInterval(timerID); 
-      zeitAbgelaufen(); 
-    }
+if(zeit <= 0){
+  clearInterval(timerID);
+  zeit = 0;
+  zeitAbgelaufen();
+}
   },100);
 }
 
@@ -1675,12 +1745,13 @@ function zeitAbgelaufen(){
 
 if(gesamtSekunden <= 0) return;
 if(!aktuelleVokabel) return;
-const correct = aktuelleVokabel.deutsch.join(" / "); // 🔥 FIX
-
+if(!aktuelleVokabel || !aktuelleVokabel.deutsch) return;
 
   document.getElementById("overlay").style.display="block";
   const popup=document.getElementById("timeOverPopup");
-  popup.innerHTML=`⏰ Zeit abgelaufen!<br>Richtige Antwort: <span class="correct-answer-highlight">${correct}</span>`;
+  popup.innerHTML=`⏰ Zeit abgelaufen!<br>Richtige Antwort: <span class="correct-answer-highlight">
+${aktuelleVokabel.deutsch.join(" / ")}
+</span>`;
   popup.style.display="block";
 popup.className = "popup-error";
 
@@ -1909,17 +1980,21 @@ document.getElementById("wort").innerHTML = html;
     // Antworten bauen
     let antworten = [...w.deutsch];
 
-    while(antworten.length < 4){
-      let randomV = aktuelleListe[Math.floor(Math.random()*aktuelleListe.length)];
+let safety = 0;
 
-      if(!randomV || !randomV.deutsch) continue;
+while(antworten.length < 4 && safety < 20){
+  let randomV = aktuelleListe[Math.floor(Math.random()*aktuelleListe.length)];
 
-      let random = randomV.deutsch[Math.floor(Math.random()*randomV.deutsch.length)];
+  if(!randomV || !randomV.deutsch) continue;
 
-      if(random && !antworten.includes(random)){
-        antworten.push(random);
-      }
-    }
+  let random = randomV.deutsch[Math.floor(Math.random()*randomV.deutsch.length)];
+
+  if(random && !antworten.includes(random)){
+    antworten.push(random);
+  }
+
+  safety++;
+}
 
     shuffleArray(antworten);
 
@@ -2368,130 +2443,25 @@ window.addEventListener("resize", positioniereElefant);
 
 window.addEventListener("load", positioniereElefant);
 
-// 🔥 AUTO-LOAD CUSTOM VOCAB
 window.addEventListener("load", () => {
   const data = localStorage.getItem("customVocab");
 
   if(data){
     vokabeln = JSON.parse(data);
 
-    // 🔥 HIER ist dein Zusatz
+    // 👉 NEU: wieder ins Textfeld schreiben
+    const inputText = vokabeln.map(v => 
+      v.spanisch.join("/") + " " + v.deutsch.join("/")
+    ).join("\n");
+
+    document.getElementById("customVocabInput").value = inputText;
+
     document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
 
     console.log("📂 Custom Vokabeln automatisch geladen");
   }
 });
 
-
-document.getElementById("saveCustomBtn").onclick = function(){
-
-  const input = document.getElementById("customVocabInput").value.trim();
-
-  if(!input){
-    alert("Bitte Vokabeln eingeben!");
-    return;
-  }
-
-  const lines = input.split("\n");
-
-  let customList = [];
-let errors = [];
-let errorLines = []; // 👈 NEU
-lines.forEach((line, index) => {
-
-  line = line.trim();
-  if(!line) return;
-
-  let spanischListe = [];
-  let deutschListe = [];
-
-  // 👉 FALL 1: MIT Bindestrich
-  if(line.includes("-")){
-
-    let parts = line.split(/\s*-\s*/);
-
-    if(parts.length < 2){
-      errors.push(`Zeile ${index+1}: Trennung mit "-" fehlerhaft`);
-errorLines.push(index); // 👈 NEU
-      return;
-    }
-
-    spanischListe = parts[0].split("/").map(w => w.trim()).filter(w => w);
-    deutschListe = parts[1].split("/").map(w => w.trim()).filter(w => w);
-
-  }
-
-  // 👉 FALL 2: OHNE Bindestrich
-  else {
-
-    let parts = line.split(/\s+/);
-
-if(parts.length < 2){
-  errors.push(`Zeile ${index+1}: Kein deutsches Wort gefunden`);
-  errorLines.push(index);
-  return;
-}
-
-    let spanischRaw = parts.shift();
-    let deutschRaw = parts.join(" ");
-
-    spanischListe = spanischRaw.split("/").map(w => w.trim()).filter(w => w);
-    deutschListe = deutschRaw.split("/").map(w => w.trim()).filter(w => w);
-  }
-
-  // 👉 EXTRA CHECK
-  if(spanischListe.length === 0 || deutschListe.length === 0){
-    errors.push(`Zeile ${index+1}: Leere Vokabel`);
-errorLines.push(index); // 👈 NEU
-    return;
-  }
-
-  customList.push({
-    spanisch: spanischListe,
-    deutsch: deutschListe,
-  });
-
-});
-highlightErrors(lines, errorLines);
-// 👇 GENAU HIER EINFÜGEN
-if(errors.length > 0){
-  alert("❌ Fehler gefunden:\n\n" + errors.join("\n"));
-  return;
-}
-
-if(customList.length === 0){
-  alert("❌ Keine gültigen Vokabeln gefunden!");
-  return;
-}
-
-
-  // 💾 speichern
-  localStorage.setItem("customVocab", JSON.stringify(customList));
-
-  // 🔥 NEU: direkt aktivieren
-  vokabeln = customList;
-
-  // 🔥 optional: Titel ändern
-  document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
-
-  alert("✅ Vokabeln gespeichert & aktiviert!");
-};
-
-
-
-
-// --- ZURÜCK ZU STANDARD ---
-document.getElementById("useDefaultBtn").onclick = function(){
-
-  vokabeln = level2.map(v => ({
-    spanisch: v[0].split("/"),
-    deutsch: v[1].split("/"),
-    box: 1,
-    next: 0
-  }));
-
-  alert("🔄 Standard-Vokabeln aktiv!");
-};
 
 document.addEventListener("keydown", (e)=>{
   if(e.key === "e"){
@@ -2578,7 +2548,31 @@ function restartGame(){
   startGesamtTimer();
   starteFrage();
 }
+document.getElementById("themeSwitch").addEventListener("change", function(e){
 
+  const icon = document.getElementById("themeIcon");
+
+  if(e.target.checked){
+    document.body.className = "night";
+    icon.innerText = "🌙";
+    localStorage.setItem("theme", "night");
+  } else {
+    document.body.className = "day";
+    icon.innerText = "☀️";
+    localStorage.setItem("theme", "day");
+  }
+});
+window.addEventListener("load", ()=>{
+  const saved = localStorage.getItem("theme");
+  const icon = document.getElementById("themeIcon");
+
+  if(saved){
+    document.body.className = saved;
+    document.getElementById("themeSwitch").checked = (saved === "night");
+
+    icon.innerText = (saved === "night") ? "🌙" : "☀️";
+  }
+});
 function spielBeenden(){
 const popup = document.getElementById("timeOverPopup");
 if(!wiederholModus){
@@ -2598,14 +2592,21 @@ console.log("FEHLER LISTE:", falschDetails);
   } else {
     html += "<p>❌ Deine Fehler:</p>";
 
-    falschDetails.forEach(f => {
-      html += `
-        <div style="margin:10px 0;">
-          <b>${f.frage}</b><br>
-          ➜ ${f.richtig}
-        </div>
-      `;
-    });
+falschDetails.forEach((f, i) => {
+
+  html += `
+    <div style="margin:10px 0;">
+      <b>${f.frage}</b><br>
+      ➜ ${f.richtig}
+    </div>
+  `;
+
+  // 🔥 Trennlinie nur zwischen Einträgen
+  if(i < falschDetails.length - 1){
+    html += `<div class="fehler-trenner"></div>`;
+  }
+
+});
   }
 
 html += `<br><b>Punkte: ${punkte}</b>`;
@@ -2615,8 +2616,8 @@ html += `<br><br>`;
 
 html += `
   <div class="popupBtnRow">
-    <button class="popupBtn" onclick="spielZurücksetzen()">🏠 Menü</button>
-<button class="popupBtn replayBtn" onclick="restartGame()">🔄 Nochmal</button>  </div>
+    <button class="popupBtn" onclick="spielZurücksetzen()">🏠 Startseite</button>
+<button class="popupBtn replayBtn" onclick="restartGame()">🔄 noch mal</button>  </div>
 `;
 
 popup.className = "";
@@ -2626,6 +2627,8 @@ popup.classList.add("popup-end");
   document.getElementById("overlay").style.display = "block";
   popup.style.display = "block";
 }  
+
+
 
 document.getElementById("wort").onclick = function(){
 
@@ -2652,8 +2655,240 @@ document.getElementById("wort").onclick = function(){
   }
 };
 
+document.getElementById("startCustomBtn").onclick = function(){
+
+  const customList = parseCustomVocab();
+
+  if(!customList){
+    document.getElementById("feedback").innerText = "❌ Fehler in den Vokabeln";
+    return;
+  }
+
+  // 💾 speichern
+  localStorage.setItem("customVocab", JSON.stringify(customList));
+
+  // 🔥 aktivieren
+  vokabeln = customList;
+
+  document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln";
+  document.getElementById("feedback").innerText = "✅ Eigene Vokabeln gestartet";
+
+  startGame();
+};
 
 
+
+// 🔘 Start mit Standard (bleibt fast gleich)
+document.getElementById("startDefaultBtn").onclick = function(){
+
+  vokabeln = level2.map(v => ({
+    spanisch: v[0].split("/"),
+    deutsch: v[1].split("/"),
+    box: 1,
+    next: 0
+  }));
+
+  document.getElementById("gameTitle").innerText = "Vokabelspiel MA 🎮";
+
+  document.getElementById("feedback").innerText = "🎮 Standard gestartet";
+
+  startGame();
+};
+
+function parseCustomVocab(){
+
+  const input = document.getElementById("customVocabInput").value.trim();
+  if(!input) return null;
+
+  const lines = input.split("\n");
+
+  let customList = [];
+  let errorLines = [];
+
+  lines.forEach((line, index) => {
+
+    line = line.trim();
+    if(!line) return;
+
+    let spanischListe = [];
+    let deutschListe = [];
+
+    if(line.includes("-")){
+      let parts = line.split(/\s*-\s*/);
+
+      if(parts.length < 2){
+        errorLines.push(index);
+        return;
+      }
+
+      spanischListe = parts[0].split("/").map(w => w.trim()).filter(w => w);
+      deutschListe = parts[1].split("/").map(w => w.trim()).filter(w => w);
+    } else {
+      let parts = line.split(/\s+/);
+
+      if(parts.length < 2){
+        errorLines.push(index);
+        return;
+      }
+
+      let spanischRaw = parts.shift();
+      let deutschRaw = parts.join(" ");
+
+      spanischListe = spanischRaw.split("/").map(w => w.trim()).filter(w => w);
+      deutschListe = deutschRaw.split("/").map(w => w.trim()).filter(w => w);
+    }
+
+    if(spanischListe.length === 0 || deutschListe.length === 0){
+      errorLines.push(index);
+      return;
+    }
+
+    customList.push({
+      spanisch: spanischListe,
+      deutsch: deutschListe,
+      box: 1,
+      next: 0
+    });
+
+  });
+
+  highlightErrors(lines, errorLines);
+
+  if(errorLines.length > 0 || customList.length === 0){
+    return null; // ❌ keine Alerts!
+  }
+
+  return customList;
+}
+
+function importExcelAndStart(){
+
+  const fileInput = document.getElementById("excelFile");
+  const file = fileInput.files[0];
+
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    try {
+
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      let customList = [];
+
+      json.forEach((row) => {
+
+        if(row.length < 2) return;
+
+        let spanisch = String(row[0]).trim();
+        let deutsch = String(row[1]).trim();
+
+        if(!spanisch || !deutsch) return;
+
+        customList.push({
+          spanisch: spanisch.split("/"),
+          deutsch: deutsch.split("/"),
+          box: 1,
+          next: 0
+        });
+
+      });
+
+      if(customList.length === 0){
+        document.getElementById("feedback").innerText = "❌ Keine gültigen Daten";
+        return;
+      }
+
+      // 👉 Vokabeln setzen
+      vokabeln = customList;
+
+      // 👉 speichern
+      localStorage.setItem("customVocab", JSON.stringify(customList));
+
+      // 👉 UI Feedback
+      document.getElementById("gameTitle").innerText = "📊 Excel Vokabeln";
+      document.getElementById("feedback").innerText = "🚀 Excel geladen – Spiel startet...";
+
+      // 👉 AUTO START (🔥 DAS IST NEU)
+      setTimeout(() => {
+        startGame();
+      }, 300);
+
+    } catch(err){
+      console.error("Excel Fehler:", err);
+      document.getElementById("feedback").innerText = "❌ Fehler beim Import";
+    }
+
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+function startGame(){
+
+  loadDaily();
+  updateDailyUI();
+
+  resetGameState();
+
+  spielModus = document.getElementById("modeSelector").value;
+  playerName = document.getElementById("playerName").value.trim() || "Spieler";
+
+  gesamtSpielZeit = parseInt(document.getElementById("timeSelector").value);
+  aktuellerModus = gesamtSpielZeit;
+  gesamtSekunden = gesamtSpielZeit;
+
+  aktuelleListe = [...vokabeln];
+  falschListe = [];
+  falschDetails = [];
+  wiederholModus = false;
+
+  punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
+  highscoreSchonVerarbeitet = false;
+
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+  document.getElementById("top10Popup").style.display = "none";
+  document.getElementById("feedback").innerText = "";
+
+  document.getElementById("punkte").innerText = 0;
+  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
+
+  updateLebenAnzeige();
+  updateComboAnzeige();
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("status").style.display = "flex";
+  document.getElementById("gameArea").style.display = "flex";
+
+  document.getElementById("timerBarContainer").style.display = "block";
+  document.getElementById("progressContainer").style.display = "block";
+  document.getElementById("highscoresContainer").style.display = "block";
+
+  shuffleArray(aktuelleListe);
+
+  updateAllHighscores();
+  startGesamtTimer();
+
+  document.getElementById("feedback").innerText =
+    getModeIcon() + " Modus gestartet!";
+
+  starteFrage();
+}
+
+document.getElementById("excelFile").addEventListener("change", function(){
+  importExcelAndStart();
+});
 
 
 
