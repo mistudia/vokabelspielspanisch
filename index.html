@@ -1388,8 +1388,8 @@ ser/estar sein"></textarea>
 
 
 <script>
-window.onerror = function(msg){
-  console.error("💥 JS ERROR:", msg);
+window.onerror = function(msg, url, line, col, error){
+  console.error("💥 ERROR:", msg, "at", line + ":" + col, error);
 };
 function resetGameState(){
 
@@ -1410,20 +1410,28 @@ const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
 
 console.log("JS läuft!");
 async function loadHighscoresOnline(){
+  console.log("Filter:", aktuellerModus, spielModus);
 
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/highscores?select=*&order=score.desc&limit=10",
-    {
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      }
+
+  const url = SUPABASE_URL + 
+    `/rest/v1/highscores?select=*&time=eq.${String(aktuellerModus)}&mode=eq.${spielModus}&order=score.desc&limit=10`;
+console.log("URL:", url);
+  const res = await fetch(url, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
     }
-  );
+  });
 
   const data = await res.json();
+  // 👉 GENAU HIER rein
+  if(!data || data.length === 0){
+    console.log("⚠️ Keine Scores für diesen Modus/Zeit");
+  }
   return data;
 }
+
+
 async function addHighscoreOnline(name, punkte){
 
   try {
@@ -1435,11 +1443,12 @@ async function addHighscoreOnline(name, punkte){
         "Authorization": "Bearer " + SUPABASE_KEY,
         "Prefer": "return=minimal"
       },
-      body: JSON.stringify({
-        name: name,
-        score: punkte,
-        mode: aktuellerModus
-      })
+body: JSON.stringify({
+  name: name,
+  score: punkte,
+time: String(aktuellerModus),
+  mode: spielModus
+})
     });
 
     console.log("✅ Highscore online gespeichert");
@@ -2889,6 +2898,33 @@ function startGame(){
 document.getElementById("excelFile").addEventListener("change", function(){
   importExcelAndStart();
 });
+
+
+document.getElementById("timeSelector").addEventListener("change", function(){
+
+  aktuellerModus = parseInt(this.value);
+  updateAllHighscores();
+
+});
+
+document.getElementById("modeSelector").addEventListener("change", function(){
+
+  spielModus = this.value;
+  updateAllHighscores();
+
+});
+
+window.addEventListener("load", () => {
+
+  aktuellerModus = parseInt(document.getElementById("timeSelector").value);
+  spielModus = document.getElementById("modeSelector").value;
+
+  updateAllHighscores();
+
+});
+
+
+
 
 
 
