@@ -1409,13 +1409,15 @@ const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
 
 console.log("JS läuft!");
+
+
 async function loadHighscoresOnline(){
-  console.log("Filter:", aktuellerModus, spielModus);
 
+  const url = SUPABASE_URL +
+    `/rest/v1/highscores?select=*&time=eq.${aktuellerModus}&mode=eq.${spielModus}&order=score.desc&limit=10`;
 
-  const url = SUPABASE_URL + 
-    `/rest/v1/highscores?select=*&time=eq.${String(aktuellerModus)}&mode=eq.${spielModus}&order=score.desc&limit=10`;
-console.log("URL:", url);
+  console.log("URL:", url);
+
   const res = await fetch(url, {
     headers: {
       "apikey": SUPABASE_KEY,
@@ -1424,10 +1426,13 @@ console.log("URL:", url);
   });
 
   const data = await res.json();
-  // 👉 GENAU HIER rein
+
+  console.log("🎯 Geladene Daten:", data);
+
   if(!data || data.length === 0){
     console.log("⚠️ Keine Scores für diesen Modus/Zeit");
   }
+
   return data;
 }
 
@@ -1446,7 +1451,7 @@ async function addHighscoreOnline(name, punkte){
 body: JSON.stringify({
   name: name,
   score: punkte,
-time: String(aktuellerModus),
+  time: aktuellerModus,
   mode: spielModus
 })
     });
