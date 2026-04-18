@@ -1701,12 +1701,15 @@ function formatZeit(sekunden){
 }
 
 document.getElementById("backBtn").onclick = function(){
-document.getElementById("startItemBook").style.display = "block";
+
+  updateAllHighscores(); // 🔥 bleibt
+
+  document.getElementById("startItemBook").style.display = "block";
 
   resetGameState();
 
   // --- Reset Werte ---
-state.punkte = 0;
+  state.punkte = 0;
   aktuelleFrage = 0;
   leben = 3;
   combo = 0;
@@ -1717,7 +1720,7 @@ state.punkte = 0;
   document.getElementById("top10Popup").style.display = "none";
   document.getElementById("feedback").innerText = "";
 
-updateScoreUI();
+  updateScoreUI();
   document.getElementById("gesamtzeit").innerText = formatZeit(0);
 
   updateLebenAnzeige();
@@ -2261,6 +2264,8 @@ spielBeenden("time");
 
 function addHighscore(name,punkte){
 if(highscoreSchonVerarbeitet) return;
+  highscoreSchonVerarbeitet = true; // 🔥 HIER setzen!
+
 if(isCustomMode){
   console.log("🚫 Custom Mode → kein Highscore");
   return;
@@ -2269,7 +2274,7 @@ if(isCustomMode){
 addHighscoreOnline(name, state.punkte);
   let hs = getHighscores();
 
-hs.push({name, punkte: state.punkte});
+hs.push({name, score: state.punkte});
   hs.sort((a,b)=>b.punkte-a.punkte);
 
   if(hs.length>10) hs = hs.slice(0,10);
@@ -2318,8 +2323,6 @@ if(rang > 0 && rang <= 10){
 function spielZurücksetzen(){
 
   resetGameState();
-
-addHighscore(playerName, state.punkte);
 
   // Reset Werte
 state.punkte = 0;
@@ -3614,12 +3617,19 @@ document.getElementById("modeSelector").addEventListener("change", function(){
   updateAllHighscores();
 
 });
+
+document.getElementById("timeSelector").addEventListener("change", function(){
+  updateAllHighscores(); // 🔥 NEU
+});
+
 document.getElementById("languageSelector").addEventListener("change", function(){
 
   updatePinyinVisibility();
 
+  updateAllHighscores(); // 🔥 NEU
+
   if(aktuelleVokabel){
-    starteFrage(); // aktualisiert Anzeige
+    starteFrage();
   }
 
 });
@@ -3761,7 +3771,6 @@ function checkEndAnswer(input, korrekt, index){
 
 function initApp(){
 
-  // Theme laden
   const saved = localStorage.getItem("theme");
   const icon = document.getElementById("themeIcon");
 
@@ -3777,7 +3786,10 @@ function initApp(){
   positioniereElefant();
   loadCustomVocabFromStorage();
   initVoices();
+
+  updateAllHighscores(); // 🔥 HIER
 }
+
 window.addEventListener("load", initApp);
 
 function initVoices(){
