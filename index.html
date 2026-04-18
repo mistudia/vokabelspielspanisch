@@ -1045,7 +1045,8 @@ filter: brightness(1.2);
 
   transition: all 0.25s ease;
 }
-#customVocabInput:focus {
+#inputLang1:focus,
+#inputLang2:focus {
   border-color: #ff9800;
   box-shadow:
     0 0 0 3px rgba(255,152,0,0.3),
@@ -1232,7 +1233,8 @@ filter: brightness(1.2);
 .night #textAntwort,
 
 
-.night #customVocabInput {
+.night #inputLang1,
+.night #inputLang2 {
   background: linear-gradient(135deg, #2a2a40, #1e1e2f);
   color: #fff;
   border: 2px solid #3f51b5;
@@ -1263,7 +1265,8 @@ filter: brightness(1.2);
   transform: scale(1.08);
   box-shadow: 0 10px 25px rgba(255,193,7,0.8);
 }
-#customVocabInput {
+#inputLang1,
+#inputLang2 {
   background: linear-gradient(135deg, #fff176, #ffd54f);
   color: #000;
   border: 2px solid #ffb300;
@@ -1345,6 +1348,36 @@ filter: brightness(1.2);
   font-weight: bold;
   font-style: italic;
 }
+#statsPanel {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.2);
+}
+
+#dualInput {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+#dualInput textarea {
+  width: 100%;
+  height: 220px;
+}
+
+#dualInput textarea {
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.1),
+    0 8px 20px rgba(0,0,0,0.15);
+}
+
+
+
 
 
 
@@ -1411,11 +1444,17 @@ filter: brightness(1.2);
 
   <div id="inputWrapper">
     <div id="highlightLayer"></div>
-    <textarea id="customVocabInput" placeholder="z.B.
-hablar sprechen
-comer essen
-vivir leben/wohnen
-ser/estar sein"></textarea>
+<div id="dualInput">
+  <textarea id="inputLang1" placeholder="z.B.
+hablar
+comer
+vivir"></textarea>
+
+  <textarea id="inputLang2" placeholder="z.B.
+sprechen
+essen
+leben"></textarea>
+</div>
   </div>
 
 <div class="button-group">
@@ -1526,6 +1565,11 @@ ser/estar sein"></textarea>
   <button id="checkBtn">OK</button>
 </div>
     <div id="feedback"></div>
+<div id="statsPanel" style="display:none; margin-top:20px;"></div>
+
+<button id="statsBtn" class="popupBtn" style="margin-top:10px;">
+  📊 Statistik anzeigen
+</button>
 
   </div>
 
@@ -3473,67 +3517,40 @@ function showItemDrop(key){
 
 function parseCustomVocab(){
 
-  const input = document.getElementById("customVocabInput").value.trim();
-  if(!input) return null;
+  const text1 = document.getElementById("inputLang1").value.trim();
+  const text2 = document.getElementById("inputLang2").value.trim();
 
-  const lines = input.split("\n");
+  if(!text1 || !text2) return null;
+
+  const lines1 = text1.split("\n");
+  const lines2 = text2.split("\n");
+
+  if(lines1.length !== lines2.length){
+    document.getElementById("feedback").innerText =
+      "❌ Anzahl Zeilen stimmt nicht überein";
+    return null;
+  }
 
   let customList = [];
-  let errorLines = [];
 
-  lines.forEach((line, index) => {
+  for(let i = 0; i < lines1.length; i++){
 
-    line = line.trim();
-    if(!line) return;
+    let l1 = lines1[i].trim();
+    let l2 = lines2[i].trim();
 
-    let spanischListe = [];
-    let deutschListe = [];
-
-    if(line.includes("-")){
-      let parts = line.split(/\s*-\s*/);
-
-      if(parts.length < 2){
-        errorLines.push(index);
-        return;
-      }
-
-      spanischListe = parts[0].split("/").map(w => w.trim()).filter(w => w);
-      deutschListe = parts[1].split("/").map(w => w.trim()).filter(w => w);
-    } else {
-      let parts = line.split(/\s+/);
-
-      if(parts.length < 2){
-        errorLines.push(index);
-        return;
-      }
-
-      let spanischRaw = parts.shift();
-      let deutschRaw = parts.join(" ");
-
-      spanischListe = spanischRaw.split("/").map(w => w.trim()).filter(w => w);
-      deutschListe = deutschRaw.split("/").map(w => w.trim()).filter(w => w);
-    }
-
-    if(spanischListe.length === 0 || deutschListe.length === 0){
-      errorLines.push(index);
-      return;
-    }
+    if(!l1 || !l2) continue;
 
 customList.push({
-  es: spanischListe,
-  de: deutschListe,
-en: [],
-fr: [],
+  [frageLang]: l1.split("/"),
+  [antwortLang]: l2.split("/"),
+  en: [],
+  fr: [],
   box: 1,
   next: 0
 });
-  });
-
-  highlightErrors(lines, errorLines);
-
-  if(errorLines.length > 0 || customList.length === 0){
-    return null; // ❌ keine Alerts!
   }
+
+  if(customList.length === 0) return null;
 
   return customList;
 }
@@ -3626,6 +3643,7 @@ document.getElementById("startItemBook").style.display = "none";
 
   spielModus = document.getElementById("modeSelector").value;
   playerName = document.getElementById("playerName").value.trim() || "Spieler";
+localStorage.setItem("playerName", playerName);
 
   gesamtSpielZeit = parseInt(document.getElementById("timeSelector").value);
 aktuelleZeit = gesamtSpielZeit;
@@ -3867,6 +3885,10 @@ function checkEndAnswer(input, korrekt, index){
 }
 
 function initApp(){
+const savedName = localStorage.getItem("playerName");
+if(savedName){
+  document.getElementById("playerName").value = savedName;
+}
 
   const saved = localStorage.getItem("theme");
   const icon = document.getElementById("themeIcon");
@@ -3901,17 +3923,82 @@ function loadCustomVocabFromStorage(){
   const data = localStorage.getItem("customVocab");
   if(!data) return;
 
-  vokabeln = JSON.parse(data);
+  const list = JSON.parse(data);
 
-  const inputText = vokabeln.map(v => 
-    v.es.join("/") + " " + v.de.join("/")
-  ).join("\n");
+  let left = [];
+  let right = [];
 
-  document.getElementById("customVocabInput").value = inputText;
+  list.forEach(v => {
+    left.push((v.es || []).join("/"));
+    right.push((v.de || []).join("/"));
+  });
+
+  document.getElementById("inputLang1").value = left.join("\n");
+  document.getElementById("inputLang2").value = right.join("\n");
+
+  vokabeln = list;
+
   document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
 
   console.log("📂 Custom Vokabeln geladen");
 }
+document.getElementById("statsBtn").onclick = function(){
+  showAllStats();
+};
+
+function showAllStats(){
+
+  const panel = document.getElementById("statsPanel");
+
+  // Toggle (auf/zu)
+  if(panel.style.display === "block"){
+    panel.style.display = "none";
+    return;
+  }
+
+  let html = "<h2>📊 Deine Vokabel-Statistik</h2>";
+
+  if(Object.keys(vocabStats).length === 0){
+    html += "<p>Noch keine Daten vorhanden</p>";
+  }
+
+  // 🔥 Sortierung: schwierigste zuerst
+  let entries = Object.entries(vocabStats);
+
+  entries.sort((a,b)=>{
+    const aScore = a[1].wrong - a[1].correct;
+    const bScore = b[1].wrong - b[1].correct;
+    return bScore - aScore;
+  });
+
+  entries.forEach(([key, s])=>{
+    const total = s.correct + s.wrong;
+    const quote = total > 0 ? Math.round((s.correct / total) * 100) : 0;
+
+    let color = "#4caf50"; // grün
+    if(quote < 50) color = "#f44336"; // rot
+    else if(quote < 80) color = "#ff9800"; // orange
+
+    html += `
+      <div style="
+        margin:8px 0;
+        padding:10px;
+        border-radius:10px;
+        background:rgba(255,255,255,0.2);
+      ">
+        <b>${key}</b><br>
+        ✅ ${s.correct} | ❌ ${s.wrong} | 
+        <span style="color:${color}; font-weight:bold;">
+          ${quote}%
+        </span>
+      </div>
+    `;
+  });
+
+  panel.innerHTML = html;
+  panel.style.display = "block";
+}
+
 
 
 
