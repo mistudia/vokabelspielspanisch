@@ -2262,14 +2262,18 @@ spielBeenden("time");
   },1000);
 }
 
-function addHighscore(name,punkte){
-if(highscoreSchonVerarbeitet) return;
-  highscoreSchonVerarbeitet = true; // 🔥 HIER setzen!
+async function addHighscore(name,punkte){
 
-if(isCustomMode){
-  console.log("🚫 Custom Mode → kein Highscore");
-  return;
-}
+  if(highscoreSchonVerarbeitet) return;
+  highscoreSchonVerarbeitet = true;
+
+  if(isCustomMode){
+    console.log("🚫 Custom Mode → kein Highscore");
+    return;
+  }
+
+  await addHighscoreOnline(name, state.punkte);
+  await updateAllHighscores();
 
 addHighscoreOnline(name, state.punkte);
   let hs = getHighscores();
@@ -3135,12 +3139,17 @@ document.getElementById("themeSwitch").addEventListener("change", function(e){
 
 
 function spielBeenden(reason){
-const popup = document.getElementById("timeOverPopup");
-if(!wiederholModus){
-addHighscore(playerName, state.punkte);
-}
-isPaused = false;
-gesamtTimerLaeuft = false;
+
+  const popup = document.getElementById("timeOverPopup");
+
+  if(!wiederholModus){
+    addHighscore(playerName, state.punkte);
+    updateAllHighscores(); // 🔥 RICHTIG hier
+  }
+
+  isPaused = false;
+  gesamtTimerLaeuft = false;
+
 console.log("FEHLER LISTE:", falschDetails);
 
   clearInterval(timerID);
