@@ -488,12 +488,21 @@ position: relative;
 .highscoreBox {
   animation: slideInRight 0.6s ease;
 }
+
+.highscore-item.new-score {
+  border: 3px solid #00ff88;
+  box-shadow: 0 0 20px #00ff88;
+  background: linear-gradient(135deg, #00ff88, #00c853);
+  color: black;
+}
+
 .highscore-item.me {
   border: 2px solid #00e5ff;
   box-shadow: 0 0 15px #00e5ff;
+
+  font-weight: bold;     /* 🔥 fett */
+  font-style: italic;    /* 🔥 kursiv */
 }
-
-
 
 
 
@@ -1320,8 +1329,22 @@ filter: brightness(1.2);
   opacity: 0.7;
 }
 
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px #00e5ff; }
+  50% { box-shadow: 0 0 20px #00e5ff; }
+  100% { box-shadow: 0 0 5px #00e5ff; }
+}
 
+.new-score {
+  border: 3px solid #00ff88;
+  box-shadow: 0 0 20px #00ff88;
+  animation: glowPulse 1.2s infinite;
+}
 
+.highscore-item.new-score.me {
+  font-weight: bold;
+  font-style: italic;
+}
 
 
 
@@ -1630,7 +1653,7 @@ const url = SUPABASE_URL +
 }
 
 
-async function addHighscoreOnline(name, punkte){
+async function addHighscoreOnline(name, punkte, timestamp){
 
   try {
     await fetch(SUPABASE_URL + "/rest/v1/highscores", {
@@ -1641,21 +1664,20 @@ async function addHighscoreOnline(name, punkte){
         "Authorization": "Bearer " + SUPABASE_KEY,
         "Prefer": "return=minimal"
       },
-body: JSON.stringify({
-  name: name,
-  score: punkte,
-  time: aktuelleZeit,
-  mode: spielModus,
-  language: aktuelleSprache   // 🔥 HIER
-})
-    });
 
-    console.log("✅ Highscore online gespeichert");
+      body: JSON.stringify({
+        name: name,
+        score: punkte,
+        time: aktuelleZeit,
+        mode: spielModus,
+        language: aktuelleSprache,
+        created_at: timestamp   // ✅ korrekt
+      })
+    });
 
   } catch(err){
     console.error("❌ Fehler beim Speichern:", err);
   }
-
 }
 
 function playSound(id){
@@ -1889,8 +1911,29 @@ let aktuelleListe = [];
 
 let combo = 0;
 let answerLocked = false;
+// 📊 STATISTIK
+let vocabStats = {};
+
+function getVocabKey(v){
+  return (v[frageLang] || []).join("/") + "→" + (v[antwortLang] || []).join("/");
+}
+
+function saveStats(){
+  localStorage.setItem("vocabStats", JSON.stringify(vocabStats));
+}
+
+function loadStats(){
+  const data = localStorage.getItem("vocabStats");
+  if(data){
+    vocabStats = JSON.parse(data);
+  }
+}
+
+loadStats();
 let highscoreSchonVerarbeitet = false; // 🔥 NEU
 let aktuelleZeit = 60;
+let lastScore = null;
+let lastTimestamp = null; // ⭐ FEHLT
 let isPaused = false
 let aktuelleSprache = "es-de"; // 🔥 NEU
 let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
@@ -1923,6 +1966,7 @@ function nächsteLernVokabel(){
 
 
 function loadLearningData(){
+
   const data = localStorage.getItem("lernVokabeln");
   if(data){
     vokabeln = JSON.parse(data);
@@ -1931,6 +1975,8 @@ function loadLearningData(){
 
 // 🔥 direkt laden beim Start
 loadLearningData();
+
+
 
 function getHighscores(){ 
   try {
@@ -2001,22 +2047,32 @@ let html = `
     html += `<div style="text-align:center; opacity:0.7;">Noch keine Einträge</div>`;
   }
 
-  hs.forEach((e,i)=>{
+hs.forEach((e,i)=>{
 
-    let klasse = "";
-    if(i === 0) klasse = "gold";
-    else if(i === 1) klasse = "silver";
-    else if(i === 2) klasse = "bronze";
+  let klasse = "";
 
-html += `
-  <div class="highscore-item ${klasse}">
-    ${i+1}. ${e.name} — ${e.score}
-  </div>
-`;
+  if(i === 0) klasse = "gold";
+  else if(i === 1) klasse = "silver";
+  else if(i === 2) klasse = "bronze";
 
+const isNew =
+  e.name === playerName &&
+  e.score === lastScore &&
+  e.created_at === lastTimestamp;
 
+if(e.name === playerName){
+  klasse += " me";
+}
 
-  });
+if(e.name === playerName && e.score === lastScore){
+  klasse += " new-score";
+}
+  html += `
+    <div class="highscore-item ${klasse}">
+      ${i+1}. ${e.name} — ${e.score}
+    </div>
+  `;
+});
 
   document.getElementById("highscoreList2").innerHTML = html;
 }
@@ -2264,27 +2320,19 @@ spielBeenden("time");
 
 async function addHighscore(name,punkte){
 
-  if(highscoreSchonVerarbeitet) return;
-  highscoreSchonVerarbeitet = true;
-
   if(isCustomMode){
     console.log("🚫 Custom Mode → kein Highscore");
     return;
   }
 
-  await addHighscoreOnline(name, state.punkte);
-  await updateAllHighscores();
+const timestamp = new Date().toISOString();
 
-addHighscoreOnline(name, state.punkte);
-  let hs = getHighscores();
+await addHighscoreOnline(name, state.punkte, timestamp);
 
-hs.push({name, score: state.punkte});
-  hs.sort((a,b)=>b.punkte-a.punkte);
+lastScore = state.punkte;
+lastTimestamp = timestamp;
 
-  if(hs.length>10) hs = hs.slice(0,10);
-
-  saveHighscores(hs);
-  updateAllHighscores();
+await updateAllHighscores();
 
 let rang = hs.findIndex(e => e.punkte === state.punkte) + 1;
   // 🥇 Platz 1 → MIT Elefant
@@ -2454,6 +2502,25 @@ let html = `
   <br><small>${level}</small>
   ${extraInfo}
 `;
+// 📊 Statistik anzeigen
+const key = getVocabKey(w);
+const stats = vocabStats[key];
+
+if(stats){
+  const total = stats.correct + stats.wrong;
+  const quote = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
+
+  html += `
+    <div style="font-size:14px; opacity:0.7;">
+      ✅ ${stats.correct} | ❌ ${stats.wrong} | 📊 ${quote}%
+    </div>
+  `;
+
+  if(stats.wrong > stats.correct){
+    html += `<div style="color:#ff4444;">⚠️ Schwierig!</div>`;
+  }
+}
+
 
 // 👉 Antwort anzeigen (nur im Lernmodus)
 if(spielModus === "learn" && antwortAngezeigt){
@@ -2669,6 +2736,16 @@ if(achievements.sword_fire){
   extra += 1;
 }
 
+// 📊 Statistik: richtig
+const key = getVocabKey(aktuelleVokabel);
+
+if(!vocabStats[key]){
+  vocabStats[key] = { correct: 0, wrong: 0 };
+}
+
+vocabStats[key].correct++;
+saveStats();
+
 state.punkte += gesamt + extra;
 updateScoreUI();
   let text = `Richtig! 🎉 +${gesamt} (⚡${bonus} 🔥${comboBonus})`;
@@ -2710,6 +2787,15 @@ function getModeIcon(){
 
 
 function falschAntwort(richtig){
+// 📊 Statistik: falsch
+const key = getVocabKey(aktuelleVokabel);
+
+if(!vocabStats[key]){
+  vocabStats[key] = { correct: 0, wrong: 0 };
+}
+
+vocabStats[key].wrong++;
+saveStats();
 if(achievements.shield){
   achievements.shield = false;
   saveAchievements();
@@ -3139,18 +3225,20 @@ document.getElementById("themeSwitch").addEventListener("change", function(e){
 
 
 function spielBeenden(reason){
+if(highscoreSchonVerarbeitet) return;
+highscoreSchonVerarbeitet = true;
 
   const popup = document.getElementById("timeOverPopup");
 
   if(!wiederholModus){
     addHighscore(playerName, state.punkte);
-    updateAllHighscores(); // 🔥 RICHTIG hier
+    updateAllHighscores();
   }
 
   isPaused = false;
   gesamtTimerLaeuft = false;
 
-console.log("FEHLER LISTE:", falschDetails);
+  console.log("FEHLER LISTE:", falschDetails);
 
   clearInterval(timerID);
   clearInterval(gesamtTimerID);
