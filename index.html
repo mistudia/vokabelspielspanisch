@@ -1597,13 +1597,16 @@ loadAchievements();
 
 
 async function loadHighscoresOnline(){
+aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
+spielModus = document.getElementById("modeSelector").value;
+aktuelleSprache = document.getElementById("languageSelector").value;
 
 const url = SUPABASE_URL +
 `/rest/v1/highscores?select=*
 &time=eq.${aktuelleZeit}
 &mode=eq.${spielModus}
 &language=eq.${aktuelleSprache}
-order=score.desc,time.asc
+&order=score.desc,time.asc
 &limit=10`;
 
   console.log("URL:", url);
@@ -1943,6 +1946,17 @@ function saveHighscores(hs){
 
 async function updateAllHighscores(){
 
+  // 🔥 HIER EINFÜGEN (GANZ OBEN)
+  aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
+  spielModus = document.getElementById("modeSelector").value;
+  aktuelleSprache = document.getElementById("languageSelector").value;
+
+  console.log("🔍 FILTER:", {
+    zeit: aktuelleZeit,
+    modus: spielModus,
+    sprache: aktuelleSprache
+  });
+
   let hs = [];
 
   try {
@@ -2263,7 +2277,7 @@ hs.push({name, punkte: state.punkte});
   saveHighscores(hs);
   updateAllHighscores();
 
-let rang = hs.findIndex(e => e.punkte === punkte) + 1;
+let rang = hs.findIndex(e => e.punkte === state.punkte) + 1;
   // 🥇 Platz 1 → MIT Elefant
 if(!hs || hs.length === 0) return;
 
