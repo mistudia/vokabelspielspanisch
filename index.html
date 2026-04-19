@@ -549,8 +549,6 @@ position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  margin-left: 10px;
 }
 
 
@@ -594,12 +592,37 @@ position: relative;
 }
 
 .highscore-title {
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 12px;   /* 👉 Abstand nach unten */
- text-transform: uppercase;
-  letter-spacing: 1px;
+  font-size: 20px;
+  font-weight: 500;
+
+  color: #fff;
+  background: #1e88e5;
+
+  padding: 8px 14px;
+  border-radius: 999px;
+
+  display: inline-block;
+  margin: 0 auto 10px auto;
+
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+@keyframes glowTitle {
+  0% {
+    text-shadow:
+      0 0 5px rgba(255,152,0,0.4),
+      0 0 10px rgba(255,152,0,0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(255,152,0,0.9),
+      0 0 35px rgba(255,152,0,0.6);
+  }
+  100% {
+    text-shadow:
+      0 0 5px rgba(255,152,0,0.4),
+      0 0 10px rgba(255,152,0,0.2);
+  }
 }
 
 .highscore-entry {
@@ -783,7 +806,6 @@ font-size:32px;
   min-width: 70px;              /* 🔥 wichtig */
   height: 60px;                 /* 🔥 überschreibt .box Höhe */
 
-  margin-left: 10px;
 }
 
 #backBtn:hover {
@@ -1306,7 +1328,7 @@ filter: brightness(1.2);
 #startItemBook {
   position: fixed;
   left: 20px;
-  top: 120px;
+  top: 220px;
 
   max-width: 240px;
   z-index: 999;
@@ -1349,12 +1371,17 @@ filter: brightness(1.2);
   font-style: italic;
 }
 #statsPanel {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  background: rgba(0,0,0,0.2);
+  display: block;
+  text-align: center;
+  max-width: 1200px;
+  width: 90%;
+  margin: 30px auto;
+
+  padding: 10px;              /* 🔥 weniger Padding */
+  border-radius: 20px;
+
+  background: transparent;    /* 🔥 KEIN grauer Block mehr */
+  backdrop-filter: none;      /* 🔥 Schatten weg */
 }
 
 #dualInput {
@@ -1375,6 +1402,56 @@ filter: brightness(1.2);
     inset 0 2px 6px rgba(0,0,0,0.1),
     0 8px 20px rgba(0,0,0,0.15);
 }
+
+#statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+
+  justify-content: center;   /* 🔥 wichtig */
+}
+
+@media (max-width: 800px) {
+  #statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  #statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.button-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 4px; /* 🔥 kleiner Abstand */
+  margin-top: 10px;
+}
+
+#pauseBtn,
+#backBtn {
+  flex-basis: auto;
+  margin: 0; /* 🔥 GANZ WICHTIG */
+}
+
+/* 🔤 Pinyin Toggle größer */
+#pinyinToggle label {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+#togglePinyin {
+  width: 22px;
+  height: 22px;
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
 
 
 
@@ -1513,8 +1590,10 @@ leben"></textarea>
 
   <!-- 🔥 HIER rein -->
 
+<div class="button-row">
   <button id="pauseBtn">⏸</button>
-<button id="backBtn">🏠</button>
+  <button id="backBtn">🏠</button>
+</div>
 
 </div>
 
@@ -1616,25 +1695,30 @@ console.log("JS läuft!");
 const ITEMS = {
   sword_fire: {
     name: "🔥 Flammenschwert",
-    rarity: "rare",
+    rarity: "common",
+    stars: 1, // ⭐
+
     effect: "extraPoints",
     desc: "+1 Punkt pro richtige Antwort"
   },
   shield: {
     name: "🛡️ Schutzschild",
-    rarity: "common",
+    rarity: "rare",
+    stars: 2, // ⭐⭐
     effect: "blockError",
     desc: "schützt Leben"
   },
   clock: {
     name: "⏳ Zeit-Booster",
     rarity: "epic",
+    stars: 3, // ⭐⭐⭐
     effect: "slowTime",
     desc: "verlangsamt timer"
   },
   crown: {
     name: "👑 Königskrone",
     rarity: "legendary",
+    stars: 4, // ⭐⭐⭐⭐
     effect: "keepCombo",
     desc: "schützt Combo"
   }
@@ -2735,13 +2819,13 @@ falschListe = falschListe.filter(v =>
 
   combo++;
   updateComboAnzeige();
-// 🗡️ ACHIEVEMENT: Feuer-Schwert
+// 🗡️ ACHIEVEMENT: Flammenschwert
 if(combo >= 10 && !achievements.sword_fire.unlocked){
   achievements.sword_fire.unlocked = true;
   achievements.sword_fire.reason = "10er Combo erreicht 🔥";
 
   saveAchievements();
-  unlockAchievement("🔥 Feuer-Schwert freigeschaltet!");
+  unlockAchievement("🔥 Flammenschwert freigeschaltet!");
 
   renderInventory();
   renderItemBook();
@@ -3594,7 +3678,6 @@ customList.push({
       localStorage.setItem("customVocab", JSON.stringify(customList));
 
       // 👉 UI Feedback
-      document.getElementById("gameTitle").innerText = "📊 Excel Vokabeln";
       document.getElementById("feedback").innerText = "🚀 Excel geladen – Spiel startet...";
 
       // 👉 AUTO START (🔥 DAS IST NEU)
@@ -3678,6 +3761,8 @@ updateScoreUI();
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("status").style.display = "flex";
   document.getElementById("gameArea").style.display = "flex";
+document.getElementById("inventory").style.display = "none";   // ❌ ausblenden
+document.getElementById("itemBook").style.display = "block";   // ✅ bleibt sichtbar
 
   document.getElementById("timerBarContainer").style.display = "block";
   document.getElementById("progressContainer").style.display = "block";
@@ -3776,7 +3861,7 @@ for(let key in ITEMS){
         : ""
       }
 
-      ⭐ ${item.rarity}
+${"⭐".repeat(item.stars || 1)}
     </div>
   `;
 }
@@ -3932,8 +4017,6 @@ function loadCustomVocabFromStorage(){
 
   vokabeln = list;
 
-  document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln aktiv";
-
   console.log("📂 Custom Vokabeln geladen");
 }
 document.getElementById("statsBtn").onclick = function(){
@@ -3950,7 +4033,10 @@ function showAllStats(){
     return;
   }
 
-  let html = "<h2>📊 Deine Vokabel-Statistik</h2>";
+let html = `
+  <h2>📊 Deine Vokabel-Statistik</h2>
+  <div id="statsGrid">
+`;
 
   if(Object.keys(vocabStats).length === 0){
     html += "<p>Noch keine Daten vorhanden</p>";
@@ -3974,12 +4060,22 @@ function showAllStats(){
     else if(quote < 80) color = "#ff9800"; // orange
 
     html += `
-      <div style="
-        margin:8px 0;
-        padding:10px;
-        border-radius:10px;
-        background:rgba(255,255,255,0.2);
-      ">
+<div style="
+  padding:14px;
+  border-radius:14px;
+
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(6px);
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+  text-align: center;
+  min-height: 90px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+">
         <b>${key}</b><br>
         ✅ ${s.correct} | ❌ ${s.wrong} | 
         <span style="color:${color}; font-weight:bold;">
@@ -3988,7 +4084,7 @@ function showAllStats(){
       </div>
     `;
   });
-
+html += "</div>";
   panel.innerHTML = html;
   panel.style.display = "block";
 }
