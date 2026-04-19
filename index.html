@@ -4,7 +4,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Unregelmäßige Verben - Vokabelspiel MA</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <style>
 body { font-family:'Segoe UI',sans-serif; text-align:center; margin:0; padding:0; transition: background 0.5s;}
@@ -731,9 +730,15 @@ font-size:32px;
 
 .start-box label {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px 1fr; /* 🔥 feste Label-Breite */
   align-items: center;
   gap: 20px;
+  transform: translateX(60px); /* 👉 nach rechts schieben */
+
+
+  width: 100%;
+  font-size: 20px;
+  text-align: left;
 }
 
 .start-box input,
@@ -985,8 +990,10 @@ filter: brightness(1.2);
 }
 #inputWrapper {
   position: relative;
-  width: 100%;
+  width: 300px;
   margin: auto;
+  margin-left: 100px;   /* 🔥 Abstand vom linken Rand */
+
 }
 
 #highlightLayer {
@@ -1123,6 +1130,12 @@ filter: brightness(1.2);
 .input-row {
   display: flex;
   gap: 80px;
+  transform: translateX(-50px); /* 👉 Wert anpassen */
+
+  min-height: 240px;   /* 🔥 sorgt für mehr „Block-Gefühl“ */
+
+  align-items: flex-start;
+  width: 100%;
 }
 
 #inputWrapper {
@@ -1139,105 +1152,27 @@ filter: brightness(1.2);
 
 }
 
-@media (max-width: 768px) {
-
-  body {
-    font-size: 16px;
-    padding: 10px;
-  }
+@media (max-width: 600px) {
 
   #gameWrapper {
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-  }
-
-  #gameArea {
-    margin-top: 40px;
-    width: 100%;
   }
 
   #highscoresContainer {
     position: static;
-    width: 100%;
     margin-top: 20px;
   }
 
-  .highscoreBox {
-    max-width: 100%;
-  }
-
   #antworten button {
-    width: 100%;
-    font-size: 20px;
-    padding: 18px;
+    font-size: 18px;
+    min-width: 120px;
   }
 
   .wort-box {
-    font-size: 24px;
-    padding: 12px;
+    font-size: 26px;
   }
 
-  .deutsches-wort {
-    font-size: 28px;
-  }
-
-  #status {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .box {
-    flex: 1 1 45%;
-    font-size: 14px;
-    height: auto;
-    padding: 10px;
-  }
-
-  .start-box {
-    width: 100%;
-    padding: 15px;
-  }
-
-  .start-box label {
-    grid-template-columns: 1fr;
-    transform: none;
-    gap: 5px;
-  }
-
-  .input-row {
-    flex-direction: column;
-    gap: 20px;
-    transform: none;
-  }
-
-  #dualInput {
-    flex-direction: column;
-  }
-
-  #textAntwort {
-    width: 100%;
-    font-size: 18px;
-  }
-
-  .button-group button {
-    width: 100%;
-  }
-
-  #themeToggle {
-    top: 10px;
-    right: 10px;
-    transform: scale(0.8);
-  }
-
-  #logo {
-    width: 140px;
-  }
-
-  #timerBarContainer,
-  #progressContainer {
-    width: 90%;
-  }
 }
 
 
@@ -1439,18 +1374,6 @@ filter: brightness(1.2);
   box-shadow:
     inset 0 2px 6px rgba(0,0,0,0.1),
     0 8px 20px rgba(0,0,0,0.15);
-}
-
-button {
-  touch-action: manipulation;
-}
-
-#antworten button {
-  min-height: 60px;
-}
-
-body {
-  overflow-x: hidden;
 }
 
 
