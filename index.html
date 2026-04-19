@@ -1642,11 +1642,11 @@ const ITEMS = {
 
 // 🏆 ACHIEVEMENTS SYSTEM
 let achievements = {
-  sword_fire: false,
-  shield: false,
-  clock: false,
-  crown: false,
-  trophy_top10: false
+  sword_fire: { unlocked: false, reason: "" },
+  shield: { unlocked: false, reason: "" },
+  clock: { unlocked: false, reason: "" },
+  crown: { unlocked: false, reason: "" },
+  trophy_top10: { unlocked: false, reason: "" }
 };
 
 function saveAchievements(){
@@ -2369,50 +2369,30 @@ async function addHighscore(name,punkte){
     return;
   }
 
-const timestamp = new Date().toISOString();
+  const timestamp = new Date().toISOString();
 
-await addHighscoreOnline(name, state.punkte, timestamp);
+  await addHighscoreOnline(name, state.punkte, timestamp);
 
-lastScore = state.punkte;
-lastTimestamp = timestamp;
+  lastScore = state.punkte;
+  lastTimestamp = timestamp;
 
-await updateAllHighscores();
+  await updateAllHighscores();
 
-let rang = hs.findIndex(e => e.punkte === state.punkte) + 1;
-  // 🥇 Platz 1 → MIT Elefant
-if(!hs || hs.length === 0) return;
+  let rang = hs.findIndex(e => e.punkte === state.punkte) + 1;
 
-if(rang === 1 && !highscoreSchonVerarbeitet){
+  if(rang === 1 && !highscoreSchonVerarbeitet){
+    highscoreSchonVerarbeitet = true;
+    jubelChoreo();
+  }
 
-  highscoreSchonVerarbeitet = true;
-
-  console.log("👑 Platz 1 → Elefant!");
-
-  jubelChoreo();
-
-  document.getElementById("feedback").innerText = "👑 PLATZ 1!!!";
-}
-
-  // 🥈🥉 Platz 2–3 → OHNE Elefant
   else if(rang === 2 || rang === 3){
-
     document.getElementById("feedback").innerText = "🏆 TOP 3!";
   }
 
-// 🏆 ACHIEVEMENT: Top 10
-if(rang <= 10 && !achievements.trophy_top10){
-  achievements.trophy_top10 = true;
-  saveAchievements();
-  unlockAchievement("🏆 Top 10 erreicht!");
-  renderInventory(); // 🔥 DAS FEHLT
-renderItemBook();
-}
-
-
-// 👉 Top 10 Popup bleibt IMMER
-if(rang > 0 && rang <= 10){
-  showTop10Popup(name, punkte, rang);
-}
+  // 👉 HIER rein!
+  if(rang > 0 && rang <= 10){
+    showTop10Popup(name, punkte, rang);
+  }
 }
 
 
@@ -2756,12 +2736,15 @@ falschListe = falschListe.filter(v =>
   combo++;
   updateComboAnzeige();
 // 🗡️ ACHIEVEMENT: Feuer-Schwert
-if(combo >= 10 && !achievements.sword_fire){
-  achievements.sword_fire = true;
+if(combo >= 10 && !achievements.sword_fire.unlocked){
+  achievements.sword_fire.unlocked = true;
+  achievements.sword_fire.reason = "10er Combo erreicht 🔥";
+
   saveAchievements();
   unlockAchievement("🔥 Feuer-Schwert freigeschaltet!");
-  renderInventory(); // 🔥 DAS FEHLT
-renderItemBook();
+
+  renderInventory();
+  renderItemBook();
 }
 
   let comboBonus = Math.floor(combo / 2);
@@ -3478,7 +3461,8 @@ function giveRandomItem(){
     itemKey = "crown";
   }
 
-  achievements[itemKey] = true;
+achievements[itemKey].unlocked = true;
+achievements[itemKey].reason = "Zufälliger Drop nach Spielende 🎁";
   saveAchievements();
 
   showItemDrop(itemKey);
@@ -3758,7 +3742,7 @@ if(!inv) return;
   let html = "<h3>🎒 Items</h3>";
 
   for(let key in achievements){
-    if(achievements[key] && ITEMS[key]){
+if(achievements[key]?.unlocked && ITEMS[key]){
       html += `${ITEMS[key].name}<br>`;
     }
   }
@@ -3773,19 +3757,29 @@ const startBook = document.getElementById("startItemBook");
 
   let html = "<h3>📖 Item-Lexikon</h3>";
 
-  for(let key in ITEMS){
+for(let key in ITEMS){
 
-    const item = ITEMS[key];
-    const unlocked = achievements[key];
+  const item = ITEMS[key];
+  const data = achievements[key];
+  const unlocked = data?.unlocked;
 
-    html += `
-      <div class="item-entry ${!unlocked ? "item-locked" : ""}">
-        <b>${unlocked ? item.name : "❓ Unbekannt"}</b><br>
-        <small>${unlocked ? item.desc : "Noch nicht freigeschaltet"}</small><br>
-        ⭐ ${item.rarity}
-      </div>
-    `;
-  }
+  html += `
+    <div class="item-entry ${!unlocked ? "item-locked" : ""}">
+      <b>${unlocked ? item.name : "❓ Unbekannt"}</b><br>
+      <small>${unlocked ? item.desc : "Noch nicht freigeschaltet"}</small><br>
+
+      ${
+        unlocked 
+        ? `<div style="font-size:12px; opacity:0.8;">
+             🏆 ${data.reason}
+           </div>` 
+        : ""
+      }
+
+      ⭐ ${item.rarity}
+    </div>
+  `;
+}
 
 if(book) book.innerHTML = html;
 if(startBook) startBook.innerHTML = html;
