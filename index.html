@@ -285,6 +285,12 @@ position: relative;
   top: 120px;         /* 👈 frei einstellbar */
   z-index: 999;
 }
+#inventoryContainer {
+  position: fixed;
+  left: 20px;   /* links statt rechts */
+  top: 220px;
+  z-index: 999;
+}
 
 .highscoreBox {
   position: sticky;
@@ -726,12 +732,23 @@ font-size:32px;
 .score-box {
   background: linear-gradient(135deg, #ffd54f, #ff9800);
   color: #000;
-  box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+
+  height: 70px;          /* 🔥 größer */
+  min-width: 140px;
+
+  font-size: 26px;       /* 🔥 größer */
+  font-weight: bold;
+
+  box-shadow: 0 0 20px rgba(255,152,0,0.8);
+
+  transform: scale(1.1); /* 🔥 leicht größer als Buttons */
 }
 
 .score-box #punkte {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
+  transition: transform 0.2s ease;
+
 }
 .start-box {
   align-items: stretch; /* 🔥 statt center */
@@ -1423,11 +1440,15 @@ filter: brightness(1.2);
   }
 }
 .button-row {
-  width: 100%;
   display: flex;
   justify-content: center;
-  gap: 4px; /* 🔥 kleiner Abstand */
+  align-items: center;
+
+  gap: 25px;
   margin-top: 10px;
+
+  width: 100%;        /* 🔥 GANZE BREITE */
+  flex-basis: 100%;   /* 🔥 neue Zeile erzwingen */
 }
 
 #pauseBtn,
@@ -1451,6 +1472,61 @@ filter: brightness(1.2);
   transform: scale(1.3);
   cursor: pointer;
 }
+#scoreInline {
+  height: 60px;
+  min-width: 110px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+  padding: 0 12px;
+  margin: 0 10px;  /* 🔥 zusätzlicher Abstand nur für Score */
+
+}
+#scoreInline span:first-child {
+  margin-right: 6px;
+}
+
+@keyframes scorePop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.score-pop {
+  animation: scorePop 0.3s ease;
+}
+
+.floating-score {
+  position: absolute;
+
+  font-size: 22px;
+  font-weight: bold;
+
+  color: #ff9800;
+
+  pointer-events: none;
+  z-index: 9999;
+
+  animation: floatUp 1s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-30px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.9);
+  }
+}
+
 
 
 
@@ -1559,23 +1635,11 @@ leben"></textarea>
   <div id="gameArea">
 
 <div id="status" style="display:none;">
-<div id="inventory"></div>
-<div id="itemBook"></div>
 
-<div class="box score-box">
-  <span>Punkte:</span>
-  <span id="punkte">0</span>
-</div>
-
-<div class="box" id="dailyBox">
-  🎯 0 / 20 | 🔥 0
-</div>
-
-
-
-<div class="box" id="comboBox">
-  🔥 Combo x0
-</div>
+  <div id="inventoryContainer">
+    <div id="inventory"></div>
+    <div id="itemBook"></div>
+  </div>
 
 
   <div class="box">
@@ -1591,8 +1655,14 @@ leben"></textarea>
   <!-- 🔥 HIER rein -->
 
 <div class="button-row">
-  <button id="pauseBtn">⏸</button>
   <button id="backBtn">🏠</button>
+
+  <div class="box score-box" id="scoreInline">
+    <span>⭐</span>
+    <span id="punkte">0</span>
+  </div>
+
+  <button id="pauseBtn">⏸</button>
 </div>
 
 </div>
@@ -1644,13 +1714,11 @@ leben"></textarea>
   <button id="checkBtn">OK</button>
 </div>
     <div id="feedback"></div>
-<div id="statsPanel" style="display:none; margin-top:20px;"></div>
-
 <button id="statsBtn" class="popupBtn" style="margin-top:10px;">
   📊 Statistik anzeigen
 </button>
 
-  </div>
+<div id="statsPanel" style="display:none; margin-top:20px;"></div>
 
   <div id="highscoresContainer">
     <div id="highscoreList2" class="highscoreBox"></div>
@@ -1726,11 +1794,11 @@ const ITEMS = {
 
 // 🏆 ACHIEVEMENTS SYSTEM
 let achievements = {
-  sword_fire: { unlocked: false, reason: "" },
-  shield: { unlocked: false, reason: "" },
-  clock: { unlocked: false, reason: "" },
-  crown: { unlocked: false, reason: "" },
-  trophy_top10: { unlocked: false, reason: "" }
+  sword_fire: { unlocked: false, used: false, reason: "" },
+  shield: { unlocked: false, used: false, reason: "" },
+  clock: { unlocked: false, used: false, reason: "" },
+  crown: { unlocked: false, used: false, reason: "" },
+  trophy_top10: { unlocked: false, used: false, reason: "" }
 };
 
 function saveAchievements(){
@@ -1815,27 +1883,51 @@ function playSound(id){
     s.play().catch(()=>{}); // 🔥 HIER
   }
 }
-function unlockAchievement(text){
+function unlockAchievement(text, type){
 
   const popup = document.createElement("div");
-
+popup.style.opacity = "0";
+popup.style.transition = "all 0.4s ease";
+popup.style.opacity = "0";
+popup.style.transition = "all 0.4s ease";
   popup.innerText = text;
   popup.style.position = "fixed";
-  popup.style.top = "20%";
-  popup.style.left = "50%";
-  popup.style.transform = "translateX(-50%)";
+popup.style.top = "50%";
+popup.style.left = "50%";
+popup.style.transform = "translate(-50%, -50%)"; // 🔥 perfekt zentriert
 
-  popup.style.background = "gold";
   popup.style.padding = "20px";
   popup.style.borderRadius = "15px";
   popup.style.fontSize = "24px";
   popup.style.zIndex = "10000";
+  popup.style.color = "white";
+
+  // 🎨 Farben je nach Item
+  let bg = "#2196f3"; // default blau
+
+  if(type === "shield") bg = "#2196f3";       // 🔵
+  if(type === "sword_fire") bg = "#9c27b0";   // 🟣
+  if(type === "clock") bg = "#ffc107";        // 🟡
+  if(type === "crown") bg = "#4caf50";        // 🟢
+
+  popup.style.background = bg;
+popup.style.boxShadow = "0 0 25px " + bg;
 
   document.body.appendChild(popup);
+setTimeout(()=>{
+  popup.style.opacity = "1";
+  popup.style.transform = "translate(-50%, -50%) scale(1)";
+},10);
+
+setTimeout(()=>{
+  popup.style.opacity = "0";
+  popup.style.transform = "translate(-50%, -40%) scale(0.8)";
 
   setTimeout(()=>{
     popup.remove();
-  },2000);
+  },300);
+
+},3500);
 }
 
 function formatZeit(sekunden){
@@ -2020,6 +2112,11 @@ function updateScoreUI(){
   const el = document.getElementById("punkte");
   if(el){
     el.innerText = state.punkte;
+
+    // 🔥 Animation triggern
+    el.classList.remove("score-pop");
+    void el.offsetWidth; // reflow → Animation neu starten
+    el.classList.add("score-pop");
   }
 }
 
@@ -2400,24 +2497,7 @@ if(f) f.volume = 0.3;
 
 function updateLebenAnzeige(){ let str=""; for(let i=0;i<leben;i++) str+="❤️"; document.getElementById("leben").innerHTML=str; }
 
-function updateComboAnzeige(){
-const el = document.getElementById("comboBox");
-if(!el) return;
-
-el.innerText = "🔥 Combo x" + combo;
-
-  // 🔥 Pulse-Effekt
-  el.classList.remove("combo-fire");
-  void el.offsetWidth;
-  el.classList.add("combo-fire");
-
-  // 🔥 HOT MODE ab Combo 5
-  if(combo >= 5){
-    el.classList.add("combo-hot");
-  } else {
-    el.classList.remove("combo-hot");
-  }
-}
+function updateComboAnzeige(){}
 
 
 function startGesamtTimer(){ 
@@ -2825,8 +2905,7 @@ if(combo >= 10 && !achievements.sword_fire.unlocked){
   achievements.sword_fire.reason = "10er Combo erreicht 🔥";
 
   saveAchievements();
-  unlockAchievement("🔥 Flammenschwert freigeschaltet!");
-
+unlockAchievement("🔥 Flammenschwert freigeschaltet!", "sword_fire");
   renderInventory();
   renderItemBook();
 }
@@ -2843,7 +2922,7 @@ if(combo >= 10 && !achievements.sword_fire.unlocked){
 
 let extra = 0;
 
-if(achievements.sword_fire){
+if(achievements.sword_fire.unlocked){
   extra += 1;
 }
 
@@ -2857,9 +2936,18 @@ if(!vocabStats[key]){
 vocabStats[key].correct++;
 saveStats();
 
-state.punkte += gesamt + extra;
+let totalPoints = gesamt + extra;
+
+state.punkte += totalPoints;
+showFloatingScore(totalPoints);
 updateScoreUI();
-  let text = `Richtig! 🎉 +${gesamt} (⚡${bonus} 🔥${comboBonus})`;
+let text = `Richtig! 🎉 +${gesamt}`;
+
+if(extra > 0){
+  text += ` +${extra}🗡️`;
+}
+
+text += ` (⚡${bonus} 🔥${comboBonus})`;
 
   if(megaMode){
     text += " 💥 MEGA MODE!!!";
@@ -2907,17 +2995,20 @@ if(!vocabStats[key]){
 
 vocabStats[key].wrong++;
 saveStats();
-if(achievements.shield){
-  achievements.shield = false;
+if(achievements.shield.unlocked && !achievements.shield.used){
+
+  achievements.shield.used = true;
   saveAchievements();
 
   document.getElementById("feedback").innerText = "🛡️ Schild hat dich gerettet!";
-  renderInventory();
-renderItemBook();
 
-setTimeout(()=>{
-  nächsteFrage();
-}, 600);
+  renderInventory();
+  renderItemBook();
+
+  setTimeout(()=>{
+    nächsteFrage();
+  }, 600);
+
   return;
 }
 if(spielModus === "learn"){
@@ -3123,12 +3214,7 @@ function updateDailyProgress(){
   updateDailyUI();
 }
 
-function updateDailyUI(){
-  const el = document.getElementById("dailyBox");
-  if(el){
-    el.innerText = "🎯 " + dailyDone + " / " + dailyGoal + " | 🔥 " + streak;
-  }
-}
+function updateDailyUI(){}
 
 function updatePinyinVisibility(){
 
@@ -3231,13 +3317,6 @@ const x = Math.min(rect.right + 20, window.innerWidth - 220);
 window.jubelChoreo = jubelChoreo;
 window.addEventListener("resize", positioniereElefant);
 
-
-document.addEventListener("keydown", (e)=>{
-  if(e.key === "e"){
-    console.log("TEST: Elefant wird ausgelöst");
-    jubelChoreo();
-  }
-});
 document.getElementById("checkBtn").onclick = checkTextAntwort;
 
 document.getElementById("textAntwort").addEventListener("keydown", (e)=>{
@@ -3272,6 +3351,8 @@ let html = `<div class="wort-box">${frageText}<br><small>${level}</small>`;
   clearInterval(timerID);
 };
 function restartGame(){
+  document.getElementById("pauseBtn").style.display = "block"; // 🔥 optional
+
 
   // Spiel sauber resetten
   resetGameState();
@@ -3336,6 +3417,8 @@ document.getElementById("themeSwitch").addEventListener("change", function(e){
 
 
 function spielBeenden(reason){
+  document.getElementById("pauseBtn").style.display = "none"; // 🔥 HIER
+
 if(highscoreSchonVerarbeitet) return;
 highscoreSchonVerarbeitet = true;
 
@@ -3405,11 +3488,7 @@ ${f.pinyin
   }"
 >
 
-    <button onclick="checkEndAnswer(
-      document.getElementById('endInput_${i}'),
-      ${JSON.stringify(f.richtig.split(" / "))},
-      ${i}
-    )">OK</button>
+<button onclick="checkEndAnswerClick(${i})">OK</button>
 
     <div id="endFeedback_${i}" style="margin-top:5px;"></div>
   </div>
@@ -3445,7 +3524,26 @@ popup.classList.add("popup-end");
 
   document.getElementById("overlay").style.display = "block";
   popup.style.display = "block";
-giveRandomItem();
+setTimeout(() => {
+  const firstInput = document.getElementById("endInput_0");
+  if(firstInput){
+    firstInput.focus();
+    firstInput.select();
+  }
+}, 50);
+// 👉 Fokus auf erstes Input setzen
+setTimeout(() => {
+  const firstInput = document.getElementById("endInput_0");
+  if(firstInput){
+    firstInput.focus();
+  }
+}, 50);
+// 🎁 Item nur wenn alle Fehler korrigiert wurden
+if(falschDetails.length > 0){
+  // kommt später über checkEndAnswer
+} else {
+  giveRandomItem(); // direkt wenn alles richtig war
+}
 }  
 
 
@@ -3530,6 +3628,7 @@ vokabeln = level2.map(v => ({
 
   startGame();
 };
+
 function giveRandomItem(){
 
   let roll = Math.random();
@@ -3546,40 +3645,13 @@ function giveRandomItem(){
   }
 
 achievements[itemKey].unlocked = true;
+achievements[itemKey].used = false;
 achievements[itemKey].reason = "Zufälliger Drop nach Spielende 🎁";
   saveAchievements();
+unlockAchievement(`🎁 ${ITEMS[itemKey].name} erhalten!`, itemKey);
 
-  showItemDrop(itemKey);
   renderInventory();
 renderItemBook();
-}
-
-
-function showItemDrop(key){
-
-  const item = ITEMS[key];
-
-  const popup = document.createElement("div");
-
-  popup.innerHTML = `
-    🎁 Neues Item!<br>
-    <b>${item.name}</b><br>
-    <small>${item.rarity.toUpperCase()}</small>
-  `;
-
-  popup.style.position = "fixed";
-  popup.style.top = "30%";
-  popup.style.left = "50%";
-  popup.style.transform = "translateX(-50%)";
-  popup.style.background = "black";
-  popup.style.color = "white";
-  popup.style.padding = "20px";
-  popup.style.borderRadius = "15px";
-  popup.style.zIndex = "10000";
-
-  document.body.appendChild(popup);
-
-  setTimeout(()=>popup.remove(), 2500);
 }
 
 
@@ -3695,6 +3767,8 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
+  document.getElementById("pauseBtn").style.display = "block"; // 🔥 HIER
+
 const langValue = document.getElementById("languageSelector").value;
 aktuelleSprache = langValue;
 updatePinyinVisibility();
@@ -3846,8 +3920,7 @@ for(let key in ITEMS){
 
   const item = ITEMS[key];
   const data = achievements[key];
-  const unlocked = data?.unlocked;
-
+const unlocked = data?.unlocked && !data?.used;
   html += `
     <div class="item-entry ${!unlocked ? "item-locked" : ""}">
       <b>${unlocked ? item.name : "❓ Unbekannt"}</b><br>
@@ -3932,35 +4005,65 @@ function checkEndAnswer(input, korrekt, index){
   if(korrektListe.includes(value)){
     feedback.innerHTML = `<span style="color:#00e600;">✔ Richtig!</span>`;
     input.disabled = true;
-  } else {
-    el.attempts++;
+} else {
+  el.attempts++;
 
-    if(el.attempts >= 3){
-      feedback.innerHTML = `
-        <span style="color:#00e600;">
-          ➜ ${korrekt.join(" / ")}
-        </span>
-      `;
-      input.disabled = true;
-    } else {
-      feedback.innerHTML = `❌ Versuch ${el.attempts}/3`;
-    }
+  if(el.attempts >= 3){
+    feedback.innerHTML = `
+      <span style="color:#00e600;">
+        ➜ ${korrekt.join(" / ")}
+      </span>
+    `;
+    input.disabled = true;
+  } else {
+    feedback.innerHTML = `❌ Versuch ${el.attempts}/3`;
+
+    // 🔥 WICHTIG: Cursor bleibt im Feld
+    setTimeout(()=>{
+      input.focus();
+    }, 0);
   }
+}
 
   input.value = "";
 
-  // ✅ HIER rein (NEU)
-  if(input.disabled){
-    endAnswersSolved++;
+if(input.disabled){
+  endAnswersSolved++;
+// 👉 nächstes Input-Feld fokussieren
+const nextInput = document.getElementById("endInput_" + (index + 1));
 
-    if(endAnswersSolved >= endAnswersTotal){
-      const btn = document.getElementById("retryBtn");
-      if(btn){
-        btn.disabled = false;
-        btn.innerText = "🔄 noch mal";
-      }
+if(nextInput && !nextInput.disabled){
+  nextInput.focus();
+}
+if(nextInput && !nextInput.disabled){
+  nextInput.focus();
+  nextInput.select(); // markiert evtl. vorhandenen Text
+}
+
+  if(endAnswersSolved >= endAnswersTotal){
+
+    const btn = document.getElementById("retryBtn");
+    if(btn){
+      btn.disabled = false;
+      btn.innerText = "🔄 noch mal";
     }
+
+    // 🎁 BELOHNUNG: Schutzschild
+achievements.shield.unlocked = true;
+achievements.shield.used = false; // 🔥 WICHTIG!
+achievements.shield.reason = "Alle Fehler korrigiert 🧠";
+
+saveAchievements();
+
+unlockAchievement("🛡️ Schutzschild erhalten!", "shield");
+
+// 🔥 ERZWINGE NEURENDER + UI UPDATE
+setTimeout(() => {
+  renderInventory();
+  renderItemBook();
+}, 50);
   }
+}
 }
 
 function initApp(){
@@ -4026,23 +4129,24 @@ document.getElementById("statsBtn").onclick = function(){
 function showAllStats(){
 
   const panel = document.getElementById("statsPanel");
+  const btn = document.getElementById("statsBtn");
 
-  // Toggle (auf/zu)
+  // Toggle
   if(panel.style.display === "block"){
     panel.style.display = "none";
+    btn.innerText = "📊 Statistik anzeigen";
     return;
   }
 
-let html = `
-  <h2>📊 Deine Vokabel-Statistik</h2>
-  <div id="statsGrid">
-`;
+  let html = `
+    <h2>📊 Deine Vokabel-Statistik</h2>
+    <div id="statsGrid">
+  `;
 
   if(Object.keys(vocabStats).length === 0){
     html += "<p>Noch keine Daten vorhanden</p>";
   }
 
-  // 🔥 Sortierung: schwierigste zuerst
   let entries = Object.entries(vocabStats);
 
   entries.sort((a,b)=>{
@@ -4055,27 +4159,23 @@ let html = `
     const total = s.correct + s.wrong;
     const quote = total > 0 ? Math.round((s.correct / total) * 100) : 0;
 
-    let color = "#4caf50"; // grün
-    if(quote < 50) color = "#f44336"; // rot
-    else if(quote < 80) color = "#ff9800"; // orange
+    let color = "#4caf50";
+    if(quote < 50) color = "#f44336";
+    else if(quote < 80) color = "#ff9800";
 
     html += `
-<div style="
-  padding:14px;
-  border-radius:14px;
-
-  background: rgba(255,255,255,0.35);
-  backdrop-filter: blur(6px);
-
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-
-  text-align: center;
-  min-height: 90px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-">
+      <div style="
+        padding:14px;
+        border-radius:14px;
+        background: rgba(255,255,255,0.35);
+        backdrop-filter: blur(6px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        text-align: center;
+        min-height: 90px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      ">
         <b>${key}</b><br>
         ✅ ${s.correct} | ❌ ${s.wrong} | 
         <span style="color:${color}; font-weight:bold;">
@@ -4084,10 +4184,48 @@ let html = `
       </div>
     `;
   });
-html += "</div>";
+
+  html += "</div>";
+
   panel.innerHTML = html;
   panel.style.display = "block";
+
+  // 🔥 NEU: Button-Text ändern
+  btn.innerText = "❌ Statistik ausblenden";
 }
+function showFloatingScore(points){
+
+  const scoreEl = document.getElementById("scoreInline");
+  const rect = scoreEl.getBoundingClientRect();
+
+  const el = document.createElement("div");
+  el.className = "floating-score";
+  el.innerText = "+" + points;
+
+  // 🔥 FIX: richtige Position (inkl. Scroll)
+  el.style.left = (rect.left + window.scrollX + rect.width / 2) + "px";
+  el.style.top  = (rect.top  + window.scrollY) + "px";
+
+  document.body.appendChild(el);
+
+  // 🔥 kleine seitliche Bewegung
+  const randomX = (Math.random() - 0.5) * 60;
+  el.style.transform = `translateX(${randomX}px)`;
+
+  setTimeout(() => {
+    el.remove();
+  }, 1000);
+}
+
+function checkEndAnswerClick(index){
+
+  const input = document.getElementById("endInput_" + index);
+
+  const korrekt = JSON.parse(input.dataset.answers);
+
+  checkEndAnswer(input, korrekt, index);
+}
+
 
 
 
