@@ -596,7 +596,29 @@ position: relative;
 .start-box h2 {
   display: none;
 }
+/* 🔒 Lehrer-Modus komplett ausblenden */
+/* 🔒 Lehrer-Modus gezielt ausblenden */
 
+/* Textfelder weg */
+#inputLang1,
+#inputLang2 {
+  display: none !important;
+}
+
+/* Excel Upload weg */
+#excelFile {
+  display: none !important;
+}
+
+/* gelber Button weg */
+#startCustomBtn {
+  display: none !important;
+}
+
+/* 🔥 WICHTIG: grüner Button bleibt sichtbar */
+#startDefaultBtn {
+  display: block !important;
+}
 .highscore-title {
   font-size: 20px;
   font-weight: 500;
@@ -1422,19 +1444,21 @@ filter: brightness(1.2);
 
 #statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
 
-  justify-content: center;   /* 🔥 wichtig */
+  justify-content: center;
+
+  /* 🔥 NEU */
+  grid-auto-rows: 110px;   /* 👉 feste Höhe für alle */
 }
-
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
   #statsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   #statsGrid {
     grid-template-columns: 1fr;
   }
@@ -1551,6 +1575,7 @@ filter: brightness(1.2);
 
   <div class="start-box">
 
+
     <label>Dein Name:
       <input id="playerName" placeholder="Name eingeben">
     </label>
@@ -1623,11 +1648,18 @@ leben"></textarea>
 </div>
 
 
+</div>   <!-- DIESE ZEILE SUCHEN -->
 
-  </div>
+<!-- 🔥 GENAU HIER EINFÜGEN -->
+<hr style="width:80%; margin:20px auto;">
 
-</div>
+<button id="statsBtn" class="popupBtn">
+  📊 Statistik anzeigen
+</button>
 
+<div id="statsPanel" style="display:none;"></div>
+
+</div>   <!-- startScreen Ende -->
 
 
 <div id="gameWrapper">
@@ -1714,11 +1746,6 @@ leben"></textarea>
   <button id="checkBtn">OK</button>
 </div>
     <div id="feedback"></div>
-<button id="statsBtn" class="popupBtn" style="margin-top:10px;">
-  📊 Statistik anzeigen
-</button>
-
-<div id="statsPanel" style="display:none; margin-top:20px;"></div>
 
   <div id="highscoresContainer">
     <div id="highscoreList2" class="highscoreBox"></div>
@@ -2687,7 +2714,7 @@ if(w.hsk){
 let html = `
 <div class="wort-box">
   ${frageText}
-  <br><small>${level}</small>
+  ${spielModus === "learn" ? `<br><small>${level}</small>` : ""}
   ${extraInfo}
 `;
 // 📊 Statistik anzeigen
@@ -3336,7 +3363,9 @@ document.getElementById("hintBtn").onclick = function(){
 const frageText = w[frageLang].join(" / ");
   const level = "⭐".repeat(w.box || 1);
 
-let html = `<div class="wort-box">${frageText}<br><small>${level}</small>`;
+let html = `<div class="wort-box">${frageText}${
+  spielModus === "learn" ? `<br><small>${level}</small>` : ""
+}`;
   html += `<div class="deutsches-wort">${w[antwortLang].join(" / ")}</div>`;
   html += `</div>`;
 
@@ -3562,7 +3591,9 @@ document.getElementById("wort").onclick = function(){
 const frageText = w[frageLang].join(" / ");
     const level = "⭐".repeat(w.box || 1);
 
-let html = `<div class="wort-box">${frageText}<br><small>${level}</small>`;
+let html = `<div class="wort-box">${frageText}${
+  spielModus === "learn" ? `<br><small>${level}</small>` : ""
+}`;
     html += `<div class="deutsches-wort">${w[antwortLang].join(" / ")}</div>`;
     html += `</div>`;
 
@@ -3767,6 +3798,8 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
+document.getElementById("statsPanel").style.display = "none";
+document.getElementById("statsBtn").innerText = "📊 Statistik anzeigen";
   document.getElementById("pauseBtn").style.display = "block"; // 🔥 HIER
 
 const langValue = document.getElementById("languageSelector").value;
@@ -4127,6 +4160,9 @@ document.getElementById("statsBtn").onclick = function(){
 };
 
 function showAllStats(){
+const lang = document.getElementById("languageSelector").value.split("-");
+frageLang = lang[0];
+antwortLang = lang[1];
 
   const panel = document.getElementById("statsPanel");
   const btn = document.getElementById("statsBtn");
@@ -4147,43 +4183,119 @@ function showAllStats(){
     html += "<p>Noch keine Daten vorhanden</p>";
   }
 
-  let entries = Object.entries(vocabStats);
+// 👉 aktuelle Vokabeln als Set (schnell)
+const standardListe = level2.map(v => ({
+  es: v[0].split("/"),
+  de: v[1].split("/"),
+  en: v[2].split("/"),
+  fr: v[3] ? v[3].split("/") : [],
+  zh: v[4] ? v[4].split("/") : []
+}));
 
-  entries.sort((a,b)=>{
-    const aScore = a[1].wrong - a[1].correct;
-    const bScore = b[1].wrong - b[1].correct;
-    return bScore - aScore;
-  });
+const basisListe = standardListe.filter(v =>
+  v[frageLang] &&
+  v[antwortLang] &&
+  v[frageLang].length > 0 &&
+  v[antwortLang].length > 0
+);
 
-  entries.forEach(([key, s])=>{
-    const total = s.correct + s.wrong;
-    const quote = total > 0 ? Math.round((s.correct / total) * 100) : 0;
+let entries = basisListe.map(v => {
 
-    let color = "#4caf50";
-    if(quote < 50) color = "#f44336";
-    else if(quote < 80) color = "#ff9800";
+  const key = getVocabKey(v);
+  const stats = vocabStats[key] || { correct: 0, wrong: 0 };
 
-    html += `
-      <div style="
-        padding:14px;
-        border-radius:14px;
-        background: rgba(255,255,255,0.35);
-        backdrop-filter: blur(6px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        text-align: center;
-        min-height: 90px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      ">
-        <b>${key}</b><br>
-        ✅ ${s.correct} | ❌ ${s.wrong} | 
-        <span style="color:${color}; font-weight:bold;">
-          ${quote}%
-        </span>
+  return [key, stats];
+});
+
+entries.sort((a, b) => {
+
+  const totalA = a[1].correct + a[1].wrong;
+  const totalB = b[1].correct + b[1].wrong;
+
+  const quoteA = totalA > 0 ? (a[1].correct / totalA) : 0;
+  const quoteB = totalB > 0 ? (b[1].correct / totalB) : 0;
+
+  return quoteA - quoteB; // 🔴 schlecht → 🟢 gut
+});
+
+ entries.forEach(([key, s], index)=>{
+
+  const total = s.correct + s.wrong;
+  const quote = total > 0 ? Math.round((s.correct / total) * 100) : 0;
+
+  let bg = "#9e9e9e"; // grau (noch nie gespielt)
+  let label = "neu";
+
+  if(total > 0){
+    if(quote < 40){
+      bg = "#f44336"; // 🔴
+      label = "schwer";
+    }
+    else if(quote < 60){
+      bg = "#ff9800"; // 🟠
+      label = "unsicher";
+    }
+    else if(quote < 80){
+      bg = "#ffeb3b"; // 🟡
+      label = "ok";
+    }
+else{
+  bg = "#4caf50"; // 🟢
+
+  if(quote === 100){
+    label = "perfekt";
+  } else {
+    label = "sicher";
+  }
+}
+  }
+
+const isPerfect = quote === 100;
+
+html += `
+  <div style="
+    padding:14px;
+    border-radius:14px;
+    background:${bg};
+    color:${quote >= 60 ? "#000" : "#fff"};
+    text-align:center;
+
+    border: ${isPerfect ? "3px solid gold" : "none"};
+    box-shadow: ${isPerfect 
+      ? "0 0 20px gold, 0 4px 12px rgba(0,0,0,0.2)" 
+      : "0 4px 12px rgba(0,0,0,0.2)"};
+
+height:100%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+overflow:hidden;
+padding:10px;
+    font-weight:bold;
+  ">
+      <div style="font-size:14px; opacity:0.8;">
+        #${index+1}
       </div>
-    `;
-  });
+
+      <div style="margin:6px 0;">
+        ${key}
+      </div>
+
+      <div style="font-size:14px;">
+        ✅ ${s.correct} | ❌ ${s.wrong}
+      </div>
+
+      <div style="font-size:18px;">
+        ${quote}% ${isPerfect ? "👑" : ""}
+      </div>
+
+      <div style="font-size:12px; opacity:0.8;">
+        ${label}
+      </div>
+  </div>
+`;
+});
 
   html += "</div>";
 
