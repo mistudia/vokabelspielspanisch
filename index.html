@@ -2186,7 +2186,8 @@ let aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
 let isCustomMode = false; // ❗ NEU
 let availableVoices = [];
 let spielModus = "multiple";
-let showPinyin = true;
+let showPinyin = false;
+let pinyinUsedThisRound = false;
 let falschListe = [];
 let falschDetails = [];
 let endAnswersSolved = 0;
@@ -2702,6 +2703,9 @@ if(!aktuelleVokabel || aktuelleVokabel !== w){
 }
 
 aktuelleVokabel = w;
+pinyinUsedThisRound = false; // 🔥 reset für neue Frage
+// 🔥 merken, ob Pinyin bei dieser Frage aktiv war
+pinyinUsedThisRound = (frageLang === "zh" && showPinyin);
 
 
 
@@ -2811,10 +2815,17 @@ document.getElementById("wort").innerHTML = html;
 if(frageLang === "zh"){
 const toggle = document.getElementById("togglePinyinInline");
 if(toggle){
-  toggle.addEventListener("change", function(){
-    showPinyin = this.checked;
-    updateCurrentQuestionUI(); // ✅ FIX
-  });
+toggle.addEventListener("change", function(){
+
+  showPinyin = this.checked;
+
+  // 🔥 HARDCORE: sobald aktiviert → merken
+  if(this.checked){
+    pinyinUsedThisRound = true;
+  }
+
+  updateCurrentQuestionUI();
+});
 }
 }
 
@@ -2970,10 +2981,17 @@ function updateCurrentQuestionUI(){
   // 🔁 Toggle neu verbinden
   const toggle = document.getElementById("togglePinyinInline");
   if(toggle){
-    toggle.addEventListener("change", function(){
-      showPinyin = this.checked;
-      updateCurrentQuestionUI();
-    });
+toggle.addEventListener("change", function(){
+
+  showPinyin = this.checked;
+
+  // 🔥 HARDCORE: sobald aktiviert → merken
+  if(this.checked){
+    pinyinUsedThisRound = true;
+  }
+
+  updateCurrentQuestionUI();
+});
   }
 }
 
@@ -3073,19 +3091,13 @@ falschListe = falschListe.filter(v =>
   combo++;
   updateComboAnzeige();
 // 🗡️ ACHIEVEMENT: Flammenschwert
-if(combo >= 10 && !achievements.sword_fire.unlocked){
-  achievements.sword_fire.unlocked = true;
-  achievements.sword_fire.reason = "10er Combo erreicht 🔥";
-
-  saveAchievements();
-unlockAchievement("🔥 Flammenschwert freigeschaltet!", "sword_fire");
-  renderInventory();
-  renderItemBook();
+if(combo >= 10){
+  unlockAndGive("sword_fire", "🔥 Flammenschwert freigeschaltet!");
 }
 
   let comboBonus = Math.floor(combo / 2);
 
-  let megaMode = combo >= 10;
+let megaMode = combo >= 25;
 
   let gesamt = 1 + bonus + comboBonus;
 
@@ -3111,6 +3123,11 @@ saveStats();
 
 let totalPoints = gesamt + extra;
 
+// 🔥 NEU: Pinyin-Strafe
+if(pinyinUsedThisRound){
+  totalPoints = Math.floor(totalPoints / 2);
+}
+
 state.punkte += totalPoints;
 showFloatingScore(totalPoints);
 updateScoreUI();
@@ -3120,7 +3137,19 @@ if(extra > 0){
   text += ` +${extra}🗡️`;
 }
 
-text += ` (⚡${bonus} 🔥${comboBonus})`;
+// 👉 Klammern sammeln
+let suffix = "";
+
+// Bonus + Combo
+suffix += ` (⚡${bonus} 🔥${comboBonus})`;
+
+// Pinyin-Strafe IMMER ans Ende
+if(pinyinUsedThisRound){
+  suffix += " (½ wegen 🔤 Pinyin)";
+}
+
+// 👉 alles am Ende anhängen
+text += suffix;
 
   if(megaMode){
     text += " 💥 MEGA MODE!!!";
@@ -3133,6 +3162,16 @@ text += ` (⚡${bonus} 🔥${comboBonus})`;
 // 🌋 SHAKE nur im Mega Mode
 if(megaMode){
   const game = document.getElementById("gameArea");
+  const highscores = document.getElementById("highscoresContainer");
+  const inventory = document.getElementById("inventoryContainer");
+
+  // 👉 AUSBLENDEN
+  [highscores, inventory].forEach(el => {
+    if(el){
+      el.style.opacity = "0";
+      el.style.pointerEvents = "none";
+    }
+  });
 
   game.classList.add("shake");
   game.classList.add("flash");
@@ -3140,9 +3179,17 @@ if(megaMode){
   setTimeout(()=>{
     game.classList.remove("shake");
     game.classList.remove("flash");
+
+    // 👉 WIEDER EINBLENDEN
+    [highscores, inventory].forEach(el => {
+      if(el){
+        el.style.opacity = "1";
+        el.style.pointerEvents = "auto";
+      }
+    });
+
   },400);
 }
-
 
 setTimeout(()=>{
   nächsteFrage();
@@ -3162,7 +3209,10 @@ function falschAntwort(richtig){
 if(state.shieldActive){
   state.shieldActive = false;
 
-  document.getElementById("feedback").innerText = "🛡️ Block!";
+  combo = 0;                // 🔥 NEU
+  updateComboAnzeige();     // 🔥 NEU
+
+  document.getElementById("feedback").innerText = "🛡️ Block! (Combo reset)";
 
   setTimeout(()=>{
     nächsteFrage();
@@ -3184,7 +3234,10 @@ if(achievements.shield.unlocked && !achievements.shield.used){
   achievements.shield.used = true;
   saveAchievements();
 
-  document.getElementById("feedback").innerText = "🛡️ Schild hat dich gerettet!";
+  combo = 0;                // 🔥 NEU
+  updateComboAnzeige();     // 🔥 NEU
+
+  document.getElementById("feedback").innerText = "🛡️ Schild hat dich gerettet! (Combo reset)";
 
   renderInventory();
   renderItemBook();
@@ -3195,6 +3248,7 @@ if(achievements.shield.unlocked && !achievements.shield.used){
 
   return;
 }
+
 if(spielModus === "learn"){
   aktuelleVokabel.box = 1;
   aktuelleVokabel.next = Date.now() + 2000;
@@ -3650,6 +3704,12 @@ let html = `<h2>${title}</h2>`;
 endAnswersSolved = 0;
 endAnswersTotal = falschDetails.length;
 endHadMistake = false; // 🔥 reset für neue Runde
+if(
+  falschDetails.length === 0 &&
+  !achievements.crown.unlocked
+){
+  unlockAndGive("crown", "👑 Königskrone freigeschaltet!");
+}
 // 🔥 wenn keine Fehler → Retry direkt erlauben
 if(falschDetails.length === 0){
   document.getElementById("retryBtn").disabled = false;
@@ -3829,21 +3889,9 @@ vokabeln = level2.map(v => ({
 };
 function giveLoot(){
 
-  if(combo >= 10 && !achievements.sword_fire.unlocked){
-    achievements.sword_fire.unlocked = true;
-    achievements.sword_fire.reason = "10er Combo erreicht 🔥";
-    saveAchievements();
-    unlockAchievement("🔥 Flammenschwert freigeschaltet!", "sword_fire");
-    addItem("sword_fire", 1);
-  }
-
-  if(state.punkte >= 1000 && !achievements.clock.unlocked){
-    achievements.clock.unlocked = true;
-    achievements.clock.reason = "1000 Punkte erreicht ⏳";
-    saveAchievements();
-    unlockAchievement("⏳ Zeit-Booster freigeschaltet!", "clock");
-    addItem("clock", 1);
-  }
+if(state.punkte >= 1000){
+  unlockAndGive("clock", "⏳ Zeit-Booster freigeschaltet!");
+}
 
 }
 
@@ -4069,6 +4117,8 @@ document.getElementById("languageSelector").addEventListener("change", function(
 
   updatePinyinVisibility();
 
+  showPinyin = false; // 🔥 HIER EINFÜGEN
+
   updateAllHighscores(); // 🔥 NEU
 
   if(aktuelleVokabel){
@@ -4107,6 +4157,24 @@ function addItem(id, amount = 1){
   }
 
   renderInventory();
+}
+
+function unlockAndGive(id, text){
+
+  if(!achievements[id].unlocked){
+
+    achievements[id].unlocked = true;
+    achievements[id].used = false;
+
+    saveAchievements();
+
+    unlockAchievement(text, id);
+
+    addItem(id, 1); // 👉 Item direkt geben
+
+    renderInventory();
+    renderItemBook();
+  }
 }
 
 function useItem(id){
@@ -4288,12 +4356,7 @@ function checkEndAnswer(input, korrekt, index){
 
       if(!endHadMistake){
 
-        achievements.shield.unlocked = true;
-        achievements.shield.used = false;
-        achievements.shield.reason = "Alle Fehler perfekt korrigiert 🧠";
-
-        saveAchievements();
-        unlockAchievement("🛡️ Schutzschild erhalten!", "shield");
+unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
 
         setTimeout(() => {
           renderInventory();
@@ -4310,6 +4373,8 @@ function checkEndAnswer(input, korrekt, index){
 
 function initApp(){
 const savedName = localStorage.getItem("playerName");
+  hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
+
 if(savedName){
   document.getElementById("playerName").value = savedName;
 }
@@ -4421,10 +4486,15 @@ entries.sort((a, b) => {
   const totalA = a[1].correct + a[1].wrong;
   const totalB = b[1].correct + b[1].wrong;
 
+  // 🔥 1. Graue zuerst
+  if(totalA === 0 && totalB > 0) return -1;
+  if(totalB === 0 && totalA > 0) return 1;
+
+  // 🔥 2. Danach nach Quote sortieren
   const quoteA = totalA > 0 ? (a[1].correct / totalA) : 0;
   const quoteB = totalB > 0 ? (b[1].correct / totalB) : 0;
 
-  return quoteA - quoteB; // 🔴 schlecht → 🟢 gut
+  return quoteA - quoteB;
 });
 
  entries.forEach(([key, s], index)=>{
@@ -4546,6 +4616,22 @@ function checkEndAnswerClick(index){
   const korrekt = JSON.parse(input.dataset.answers);
 
   checkEndAnswer(input, korrekt, index);
+}
+
+function hidePremiumModes(){
+
+  const selector = document.getElementById("modeSelector");
+
+  const options = selector.querySelectorAll("option");
+
+  options.forEach(opt => {
+    if(opt.value === "learn" || opt.value === "typing"){
+      opt.style.display = "none";
+    }
+  });
+
+  // Sicherheit: immer auf Multiple setzen
+  selector.value = "multiple";
 }
 
 
