@@ -2304,6 +2304,22 @@ async function updateAllHighscores(){
 
   try {
     hs = await loadHighscoresOnline();
+// 🔥 LIVE SCORE EINFÜGEN
+// 🔥 LIVE SCORE EINFÜGEN
+if(!isCustomMode && playerName && !gameEnded){
+  hs.push({
+    name: playerName,
+    score: state.punkte,
+    created_at: "live"
+  });
+}
+
+// 🔥 sortieren
+hs.sort((a,b) => b.score - a.score);
+
+// 🔥 auf Top 10 begrenzen
+hs = hs.slice(0,10);
+
     console.log("📥 Geladene Highscores:", hs);
   } catch(e){
     console.error("❌ Fehler beim Laden:", e);
@@ -2342,6 +2358,7 @@ let html = `
   }
 
 hs.forEach((e,i)=>{
+const isLive = e.created_at === "live";
 
   let klasse = "";
 
@@ -2356,6 +2373,9 @@ const isNew =
 
 if(e.name === playerName){
   klasse += " me";
+}
+if(isLive){
+  klasse += " new-score";
 }
 
 if(e.name === playerName && e.score === lastScore){
@@ -3191,9 +3211,12 @@ if(megaMode){
   },400);
 }
 
+updateAllHighscores(); // erst aktualisieren
+
 setTimeout(()=>{
   nächsteFrage();
 }, 300);
+
 }
 
 
