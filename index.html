@@ -2005,7 +2005,6 @@ function formatZeit(sekunden){
 
 document.getElementById("backBtn").onclick = function(){
 
-  updateAllHighscores(); // 🔥 bleibt
 
   document.getElementById("startItemBook").style.display = "block";
 
@@ -2032,6 +2031,9 @@ document.getElementById("backBtn").onclick = function(){
   document.getElementById("gameArea").style.display = "none";
   document.getElementById("status").style.display = "none";
   document.getElementById("startScreen").style.display = "flex";
+
+  updateAllHighscores(); // 🔥 bleibt
+
 };
 
 
@@ -2183,6 +2185,7 @@ function updateScoreUI(){
 
 
 let aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
+let beantwortet = 0;
 let isCustomMode = false; // ❗ NEU
 let availableVoices = [];
 let spielModus = "multiple";
@@ -2374,11 +2377,14 @@ const isNew =
 if(e.name === playerName){
   klasse += " me";
 }
-if(isLive){
-  klasse += " new-score";
-}
+// 🔥 Nur EIN grüner Eintrag
 
-if(e.name === playerName && e.score === lastScore){
+if(isLive){
+  // 👉 während Spiel läuft → nur Live markieren
+  klasse += " new-score";
+} 
+else if(e.name === playerName && e.score === lastScore){
+  // 👉 nach Spiel → letzter Score markieren
   klasse += " new-score";
 }
   html += `
@@ -2533,6 +2539,9 @@ if(zeit <= 0){
 
 
 function zeitAbgelaufen(){
+  if(gameEnded) return; // 🔥 GANZ OBEN
+beantwortet++;
+
   if(aktuelleVokabel && !falschDetails.some(f => 
     f.frage === aktuelleVokabel[frageLang].join(" / ")
   )){
@@ -2679,6 +2688,8 @@ updateScoreUI();
 
 
 function starteFrage(){
+  if(gameEnded) return; // 🔥 DAS IST DER FIX
+
 answerLocked = false;
 
   try {
@@ -3049,6 +3060,8 @@ if(spielModus === "learn"){
 
 // --- Antwort prüfen ---
 function checkAntwort(eingabe, richtigListe){
+  if(gameEnded) return; // 🔥 HIER EINFÜGEN
+
 
   if(isPaused) return;
 
@@ -3062,6 +3075,8 @@ function checkAntwort(eingabe, richtigListe){
 }
 
 function checkTextAntwort(){
+  if(gameEnded) return; // 🔥 HIER EINFÜGEN
+
 
   if(isPaused) return;
   if(answerLocked) return;   // 🔥 NEU
@@ -3086,6 +3101,7 @@ falschAntwort(aktuelleVokabel[antwortLang].join(" / "));
 }
 
 function richtigAntwort(){
+beantwortet++;
 if(spielModus === "learn"){
   aktuelleVokabel.box = Math.min(5, aktuelleVokabel.box + 1);
 
@@ -3111,7 +3127,7 @@ falschListe = falschListe.filter(v =>
   combo++;
   updateComboAnzeige();
 // 🗡️ ACHIEVEMENT: Flammenschwert
-if(combo >= 10){
+if(combo === 10){
   unlockAndGive("sword_fire", "🔥 Flammenschwert freigeschaltet!");
 }
 
@@ -3229,6 +3245,7 @@ function getModeIcon(){
 
 
 function falschAntwort(richtig){
+beantwortet++;
 if(state.shieldActive){
   state.shieldActive = false;
 
@@ -3342,6 +3359,8 @@ spielBeenden("leben");
 
 
 function nächsteFrage(){
+  if(gameEnded) return; // 🔥 WICHTIG
+
 
   if(spielModus !== "learn"){
     aktuelleFrage++;
@@ -3632,6 +3651,7 @@ isSavingScore = false;
 
   // Werte zurücksetzen
 state.punkte = 0;
+beantwortet = 0;
   aktuelleFrage = 0;
   leben = 3;
   combo = 0;
@@ -3781,10 +3801,13 @@ ${f.pinyin
 });
   }
 
+const gesamt = beantwortet;
+const falsch = falschDetails.length;
+const richtig = gesamt - falsch;
+
 html += `<br><b>Punkte: ${state.punkte}</b>`;
+html += `<br>📊 ${richtig} von ${gesamt} richtig`;
 html += `<br><br>`;
-
-
 
 html += `
   <div class="popupBtnRow">
@@ -4084,6 +4107,7 @@ if(aktuelleListe.length === 0){
   wiederholModus = false;
 
 state.punkte = 0;
+beantwortet = 0;
   aktuelleFrage = 0;
   leben = 3;
   combo = 0;
@@ -4161,7 +4185,7 @@ function renderInventory(){
     html += `
       <div class="item-entry">
         <button onclick="useItem('${item.id}')">
-          ${ITEMS[item.id].name} (${item.charges})
+${ITEMS[item.id].name}
         </button>
       </div>
     `;
@@ -4170,48 +4194,47 @@ function renderInventory(){
   inv.innerHTML = html;
 }
 
-function addItem(id, amount = 1){
-  let item = inventory.find(i => i.id === id);
+function addItem(id){
 
-  if(item){
-    item.charges += amount;
-  } else {
-    inventory.push({ id, charges: amount });
+  // 👉 schon vorhanden? → nichts tun
+  if(inventory.some(i => i.id === id)){
+    return;
   }
+
+  inventory.push({ id });
 
   renderInventory();
 }
 
 function unlockAndGive(id, text){
 
-  if(!achievements[id].unlocked){
-
-    achievements[id].unlocked = true;
-    achievements[id].used = false;
-
-    saveAchievements();
-
-    unlockAchievement(text, id);
-
-    addItem(id, 1); // 👉 Item direkt geben
-
-    renderInventory();
-    renderItemBook();
+  // 👉 doppelt verhindern
+  if(achievements[id].unlocked){
+    return;
   }
+
+  achievements[id].unlocked = true;
+  achievements[id].used = false;
+
+  saveAchievements();
+
+  unlockAchievement(text, id);
+
+  addItem(id); // 👉 nur einmal möglich
+
+  renderInventory();
+  renderItemBook();
 }
 
 function useItem(id){
+
   let item = inventory.find(i => i.id === id);
-
-  if(!item || item.charges <= 0) return;
-
-  item.charges--;
+  if(!item) return;
 
   applyItemEffect(id);
 
-  if(item.charges <= 0){
-    inventory = inventory.filter(i => i.id !== id);
-  }
+  // 👉 Item wird danach entfernt (consumable)
+  inventory = inventory.filter(i => i.id !== id);
 
   renderInventory();
 }
@@ -4244,7 +4267,7 @@ for(let key in ITEMS){
 
   const item = ITEMS[key];
   const data = achievements[key];
-const unlocked = data?.unlocked && !data?.used;
+const unlocked = data?.unlocked;
   html += `
     <div class="item-entry ${!unlocked ? "item-locked" : ""}">
       <b>${unlocked ? item.name : "❓ Unbekannt"}</b><br>
@@ -4471,10 +4494,17 @@ antwortLang = lang[1];
     return;
   }
 
-  let html = `
-    <h2>📊 Deine Vokabel-Statistik</h2>
-    <div id="statsGrid">
-  `;
+let html = `
+  <h2>📊 Deine Vokabel-Statistik</h2>
+
+  <div style="margin-bottom:15px;">
+    <button class="popupBtn" onclick="startWeakTraining()">
+      🔥 Schwache Begriffe trainieren (≤50%)
+    </button>
+  </div>
+
+  <div id="statsGrid">
+`;
 
   if(Object.keys(vocabStats).length === 0){
     html += "<p>Noch keine Daten vorhanden</p>";
@@ -4657,6 +4687,62 @@ function hidePremiumModes(){
   selector.value = "multiple";
 }
 
+function startWeakTraining(){
+
+  const weakList = [];
+
+  const lang = document.getElementById("languageSelector").value.split("-");
+  const frageLang = lang[0];
+  const antwortLang = lang[1];
+
+  vokabeln.forEach(v => {
+
+    const key = (v[frageLang] || []).join("/") + "→" + (v[antwortLang] || []).join("/");
+
+    const stats = vocabStats[key];
+
+    if(!stats) return;
+
+    const total = stats.correct + stats.wrong;
+    if(total === 0) return;
+
+    const quote = (stats.correct / total) * 100;
+
+    if(quote <= 50){
+      weakList.push(v);
+    }
+
+  });
+
+  if(weakList.length === 0){
+    alert("🎉 Keine schwachen Begriffe vorhanden!");
+    return;
+  }
+
+  aktuelleListe = weakList;
+  shuffleArray(aktuelleListe);
+
+  gameEnded = false;
+  state.punkte = 0;
+  aktuelleFrage = 0;
+  leben = 3;
+  combo = 0;
+
+  document.getElementById("statsPanel").style.display = "none";
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("status").style.display = "flex";
+  document.getElementById("gameArea").style.display = "flex";
+
+  document.getElementById("feedback").innerText =
+    "🔥 Schwache Begriffe Modus gestartet!";
+
+  updateScoreUI();
+  updateLebenAnzeige();
+
+  startGesamtTimer();
+  starteFrage();
+}
 
 
 
