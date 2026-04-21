@@ -78,6 +78,16 @@ transition:all 0.5s;
   display: none;
 }
 
+.tile-number {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+
+  font-size: 14px;
+  opacity: 0.7;
+  font-weight: bold;
+}
+
 .slider {
   position: absolute;
   cursor: pointer;
@@ -536,7 +546,7 @@ position: relative;
 }
 #pauseBtn {
   position: relative;
-  z-index: 10001; /* höher als Overlay */
+  z-index: 100; /* höher als Overlay */
   height: 60px;
   min-width: 60px;
 
@@ -1445,7 +1455,9 @@ filter: brightness(1.2);
 #statsGrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  column-gap: 20px;  /* 👉 horizontal */
+  row-gap: 40px;     /* 👉 vertikal */
+padding:18px 12px;
 
   justify-content: center;
 
@@ -1483,19 +1495,26 @@ filter: brightness(1.2);
 
 /* 🔤 Pinyin Toggle größer */
 #pinyinToggle label {
-  font-size: 20px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
 }
 
+#togglePinyinInline {
+  transform: scale(1.6);
+  cursor: pointer;
+  accent-color: #ff9800; /* 🔥 Farbe passend zum Spiel */
+
+}
+
 #togglePinyin {
   width: 22px;
   height: 22px;
-  transform: scale(1.3);
-  cursor: pointer;
+  transform: scale(1.8); /* 🔥 größer */
 }
+
 #scoreInline {
   height: 60px;
   min-width: 110px;
@@ -1551,7 +1570,23 @@ filter: brightness(1.2);
   }
 }
 
+.item-entry {
+  text-align: center;   /* 👉 alles mittig */
+}
 
+.input-error {
+  box-shadow: 0 0 15px rgba(255,0,0,0.8);
+}
+
+.correct {
+  background: #4caf50 !important;
+  color: #fff !important;
+}
+
+.wrong {
+  background: #f44336 !important;
+  color: #fff !important;
+}
 
 
 
@@ -1709,12 +1744,7 @@ leben"></textarea>
 </div>
 
 <div id="themeToggle">
-<div id="pinyinToggle" style="margin-top:10px; display:none;">
-  <label>
-    <input type="checkbox" id="togglePinyin" checked>
-    🔤 Pinyin anzeigen
-  </label>
-</div>
+
 <span id="themeIcon">☀️</span>
  <label class="switch">
     <input type="checkbox" id="themeSwitch">
@@ -1787,35 +1817,39 @@ const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
 
 console.log("JS läuft!");
+
 const ITEMS = {
   sword_fire: {
     name: "🔥 Flammenschwert",
     rarity: "common",
-    stars: 1, // ⭐
-
+    stars: 1,
     effect: "extraPoints",
-    desc: "+1 Punkt pro richtige Antwort"
+    desc: "+1 Punkt pro richtige Antwort",
+    unlock: "Erreiche eine 10er Combo 🔥"
   },
   shield: {
     name: "🛡️ Schutzschild",
     rarity: "rare",
-    stars: 2, // ⭐⭐
+    stars: 2,
     effect: "blockError",
-    desc: "schützt Leben"
+    desc: "schützt Leben",
+    unlock: "Korrigiere alle Fehler 🧠"
   },
   clock: {
     name: "⏳ Zeit-Booster",
     rarity: "epic",
-    stars: 3, // ⭐⭐⭐
+    stars: 3,
     effect: "slowTime",
-    desc: "verlangsamt timer"
+    desc: "verlangsamt timer",
+    unlock: "Erreiche 1000 Punkte ⏳"
   },
   crown: {
     name: "👑 Königskrone",
     rarity: "legendary",
-    stars: 4, // ⭐⭐⭐⭐
+    stars: 4,
     effect: "keepCombo",
-    desc: "schützt Combo"
+    desc: "schützt Combo",
+    unlock: "Perfektes Spiel ohne Fehler 👑"
   }
 };
 
@@ -2163,6 +2197,10 @@ let aktuelleListe = [];
 
 let combo = 0;
 let answerLocked = false;
+let inventory = [];
+
+state.shieldActive = false;
+state.timeFreeze = false;
 // 📊 STATISTIK
 let vocabStats = {};
 
@@ -2183,6 +2221,9 @@ function loadStats(){
 
 loadStats();
 let highscoreSchonVerarbeitet = false; // 🔥 NEU
+let gameEnded = false;
+let isSavingScore = false;
+let endHadMistake = false; // 🔥 NEU
 let aktuelleZeit = 60;
 let lastScore = null;
 let lastTimestamp = null; // ⭐ FEHLT
@@ -2452,7 +2493,9 @@ function startTimer(){
   clearInterval(timerID);
 
   timerID=setInterval(()=>{
-let speed = achievements.clock ? 0.07 : 0.1;
+let speed = state.timeFreeze ? 0 : 0.1;
+if(state.timeFreeze) return;
+
 zeit = Math.max(0, zeit - speed);
 if (zeit < 0) zeit = 0;
     updateTimerBar();
@@ -2553,39 +2596,37 @@ spielBeenden("time");
   },1000);
 }
 
-async function addHighscore(name,punkte){
+async function addHighscore(name, punkte){
 
-  if(isCustomMode){
-    console.log("🚫 Custom Mode → kein Highscore");
+  if(isSavingScore){
+    console.log("🚫 Doppeltes Speichern verhindert");
     return;
   }
 
-  const timestamp = new Date().toISOString();
+  isSavingScore = true;
 
-  await addHighscoreOnline(name, state.punkte, timestamp);
+  try {
 
-  lastScore = state.punkte;
-  lastTimestamp = timestamp;
+    if(isCustomMode){
+      console.log("🚫 Custom Mode → kein Highscore");
+      return;
+    }
 
-  await updateAllHighscores();
+    const timestamp = new Date().toISOString();
 
-  let rang = hs.findIndex(e => e.punkte === state.punkte) + 1;
+    await addHighscoreOnline(name, state.punkte, timestamp);
 
-  if(rang === 1 && !highscoreSchonVerarbeitet){
-    highscoreSchonVerarbeitet = true;
-    jubelChoreo();
-  }
+    lastScore = state.punkte;
+    lastTimestamp = timestamp;
 
-  else if(rang === 2 || rang === 3){
-    document.getElementById("feedback").innerText = "🏆 TOP 3!";
-  }
+    await updateAllHighscores();
 
-  // 👉 HIER rein!
-  if(rang > 0 && rang <= 10){
-    showTop10Popup(name, punkte, rang);
+  } catch(err){
+    console.error("❌ Fehler beim Speichern:", err);
+  } finally {
+    isSavingScore = false;
   }
 }
-
 
 function spielZurücksetzen(){
 
@@ -2713,9 +2754,24 @@ if(w.hsk){
 // 👉 Haupt-HTML
 let html = `
 <div class="wort-box">
-  ${frageText}
+
+  <div style="display:flex; align-items:center; justify-content:center; gap:15px; flex-wrap:wrap;">
+    
+    <div>${frageText}</div>
+
+    ${frageLang === "zh" ? `
+      <label style="font-size:16px; cursor:pointer;">
+        <input type="checkbox" id="togglePinyinInline" ${showPinyin ? "checked" : ""}>
+        🔤
+      </label>
+    ` : ""}
+
+  </div>
+
   ${spielModus === "learn" ? `<br><small>${level}</small>` : ""}
   ${extraInfo}
+  </div>  
+
 `;
 // 📊 Statistik anzeigen
 const key = getVocabKey(w);
@@ -2751,6 +2807,16 @@ html += `</div>`;
 // 👉 WICHTIG: DOM setzen
 document.getElementById("wort").innerHTML = html;
 
+// 👇 HIER REIN
+if(frageLang === "zh"){
+const toggle = document.getElementById("togglePinyinInline");
+if(toggle){
+  toggle.addEventListener("change", function(){
+    showPinyin = this.checked;
+    updateCurrentQuestionUI(); // ✅ FIX
+  });
+}
+}
 
 speak(frageText);
     // Antworten bauen
@@ -2783,9 +2849,24 @@ while(antworten.length < 4 && safety < 20){
     shuffleArray(antworten);
 
 if(spielModus === "multiple"){
-  antworten.forEach(a=>{
-    const btn = document.createElement("button");
-    btn.innerText = a;
+antworten.forEach(a=>{
+  const btn = document.createElement("button");
+
+  btn.innerText = a;
+btn.dataset.answer = a;   // 🔥 HIER REIN
+
+  // 👉 Pinyin im Button speichern (unsichtbar)
+  if(antwortLang === "zh" && frageLang === "de"){
+    let match = aktuelleListe.find(v => 
+      v.zh && v.zh.includes(a)
+    );
+
+    if(match && match.pinyin){
+      const index = match.zh.indexOf(a);
+      const py = match.pinyin[index] || "";
+      btn.dataset.pinyin = py;
+    }
+  }
 
 btn.onclick = ()=>{
 
@@ -2795,29 +2876,39 @@ btn.onclick = ()=>{
   const richtigListe = w[antwortLang];
 
   // ❌ FALSCH
-  if(!richtigListe.includes(a)){
-    btn.style.background = "#f44336"; // rot
-    btn.style.color = "#fff";
-  }
+if(!richtigListe.includes(btn.dataset.answer)){
 
-  // ✅ RICHTIG
-  else {
-    btn.style.background = "#4caf50"; // grün
-    btn.style.color = "#fff";
-  }
+  // ❌ nur der geklickte Button rot
+  btn.classList.add("wrong");
 
-  // 👉 Optional: richtige Antwort zusätzlich markieren
+  // 👉 Pinyin anzeigen (ohne alles rot zu machen)
   const buttons = document.querySelectorAll("#antworten button");
+
   buttons.forEach(b => {
-    if(richtigListe.includes(b.innerText)){
-      b.style.background = "#4caf50";
-      b.style.color = "#fff";
+    if(b.dataset.pinyin){
+      b.innerHTML = `
+        <div>${b.innerText}</div>
+        <div class="pinyin">${b.dataset.pinyin}</div>
+      `;
     }
   });
 
+} else {
+
+  // ✅ richtige Antwort direkt grün
+  btn.classList.add("correct");
+}
+
+  // 👉 richtige Antworten markieren
+  const buttons = document.querySelectorAll("#antworten button");
+buttons.forEach(b => {
+  if(richtigListe.includes(b.dataset.answer)){
+    b.classList.add("correct");
+  }
+});
+
   checkAntwort(a, richtigListe);
 };
-
     document.getElementById("antworten").appendChild(btn);
   });
 }
@@ -2828,6 +2919,61 @@ btn.onclick = ()=>{
   } catch(err){
     console.error("💥 Fehler in starteFrage:", err);
     nächsteFrage(); // 🔥 verhindert Freeze
+  }
+}
+
+function updateCurrentQuestionUI(){
+
+  if(!aktuelleVokabel) return;
+
+  const w = aktuelleVokabel;
+
+  const frageText = w[frageLang].join(" / ");
+
+  let extraInfo = "";
+
+  if(frageLang === "zh" && showPinyin){
+    extraInfo += `
+      <div class="pinyin">
+        ${(w.pinyin || []).join(" / ")}
+      </div>
+    `;
+  }
+
+  if(w.hsk){
+    extraInfo += `
+      <div class="hsk">
+        HSK ${w.hsk}
+      </div>
+    `;
+  }
+
+  let html = `
+    <div class="wort-box">
+      <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
+        
+        <div>${frageText}</div>
+
+        <label style="font-size:16px; cursor:pointer;">
+          <input type="checkbox" id="togglePinyinInline" ${showPinyin ? "checked" : ""}>
+          🔤
+        </label>
+
+      </div>
+
+      ${extraInfo}
+    </div>
+  `;
+
+  document.getElementById("wort").innerHTML = html;
+
+  // 🔁 Toggle neu verbinden
+  const toggle = document.getElementById("togglePinyinInline");
+  if(toggle){
+    toggle.addEventListener("change", function(){
+      showPinyin = this.checked;
+      updateCurrentQuestionUI();
+    });
   }
 }
 
@@ -3013,6 +3159,17 @@ function getModeIcon(){
 
 
 function falschAntwort(richtig){
+if(state.shieldActive){
+  state.shieldActive = false;
+
+  document.getElementById("feedback").innerText = "🛡️ Block!";
+
+  setTimeout(()=>{
+    nächsteFrage();
+  }, 400);
+
+  return;
+}
 // 📊 Statistik: falsch
 const key = getVocabKey(aktuelleVokabel);
 
@@ -3060,7 +3217,7 @@ antwort: [...aktuelleVokabel[antwortLang]]
 // 👉 NEU: falsche Antwort speichern
 
 
-if(!achievements.crown){
+if(!achievements.crown.unlocked){
   combo = 0;
 }
 updateComboAnzeige();
@@ -3251,6 +3408,9 @@ function updatePinyinVisibility(){
   const toggle = document.getElementById("pinyinToggle");
   const checkbox = document.getElementById("togglePinyin");
 
+  // 🔥 FIX: Existenz prüfen
+  if(!toggle || !checkbox) return;
+
   if(frage === "zh"){
     toggle.style.display = "block";
   } else {
@@ -3259,6 +3419,7 @@ function updatePinyinVisibility(){
     showPinyin = false;
   }
 }
+
 function ankiAnswer(type){
 
   if(isPaused) return;
@@ -3380,6 +3541,8 @@ let html = `<div class="wort-box">${frageText}${
   clearInterval(timerID);
 };
 function restartGame(){
+gameEnded = false;
+isSavingScore = false;
   document.getElementById("pauseBtn").style.display = "block"; // 🔥 optional
 
 
@@ -3446,10 +3609,15 @@ document.getElementById("themeSwitch").addEventListener("change", function(e){
 
 
 function spielBeenden(reason){
-  document.getElementById("pauseBtn").style.display = "none"; // 🔥 HIER
 
-if(highscoreSchonVerarbeitet) return;
-highscoreSchonVerarbeitet = true;
+  if(gameEnded){
+    console.log("🚫 Spiel schon beendet:", reason);
+    return;
+  }
+
+  gameEnded = true;
+
+  document.getElementById("pauseBtn").style.display = "none";
 
   const popup = document.getElementById("timeOverPopup");
 
@@ -3481,6 +3649,7 @@ let html = `<h2>${title}</h2>`;
 
 endAnswersSolved = 0;
 endAnswersTotal = falschDetails.length;
+endHadMistake = false; // 🔥 reset für neue Runde
 // 🔥 wenn keine Fehler → Retry direkt erlauben
 if(falschDetails.length === 0){
   document.getElementById("retryBtn").disabled = false;
@@ -3553,6 +3722,11 @@ popup.classList.add("popup-end");
 
   document.getElementById("overlay").style.display = "block";
   popup.style.display = "block";
+if(!wiederholModus){
+  setTimeout(() => {
+    giveLoot();
+  }, 300);
+}
 setTimeout(() => {
   const firstInput = document.getElementById("endInput_0");
   if(firstInput){
@@ -3567,12 +3741,6 @@ setTimeout(() => {
     firstInput.focus();
   }
 }, 50);
-// 🎁 Item nur wenn alle Fehler korrigiert wurden
-if(falschDetails.length > 0){
-  // kommt später über checkEndAnswer
-} else {
-  giveRandomItem(); // direkt wenn alles richtig war
-}
 }  
 
 
@@ -3659,30 +3827,24 @@ vokabeln = level2.map(v => ({
 
   startGame();
 };
+function giveLoot(){
 
-function giveRandomItem(){
-
-  let roll = Math.random();
-  let itemKey;
-
-  if(roll < 0.5){
-    itemKey = "shield";
-  } else if(roll < 0.8){
-    itemKey = "sword_fire";
-  } else if(roll < 0.95){
-    itemKey = "clock";
-  } else {
-    itemKey = "crown";
+  if(combo >= 10 && !achievements.sword_fire.unlocked){
+    achievements.sword_fire.unlocked = true;
+    achievements.sword_fire.reason = "10er Combo erreicht 🔥";
+    saveAchievements();
+    unlockAchievement("🔥 Flammenschwert freigeschaltet!", "sword_fire");
+    addItem("sword_fire", 1);
   }
 
-achievements[itemKey].unlocked = true;
-achievements[itemKey].used = false;
-achievements[itemKey].reason = "Zufälliger Drop nach Spielende 🎁";
-  saveAchievements();
-unlockAchievement(`🎁 ${ITEMS[itemKey].name} erhalten!`, itemKey);
+  if(state.punkte >= 1000 && !achievements.clock.unlocked){
+    achievements.clock.unlocked = true;
+    achievements.clock.reason = "1000 Punkte erreicht ⏳";
+    saveAchievements();
+    unlockAchievement("⏳ Zeit-Booster freigeschaltet!", "clock");
+    addItem("clock", 1);
+  }
 
-  renderInventory();
-renderItemBook();
 }
 
 
@@ -3798,6 +3960,8 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
+gameEnded = false;
+isSavingScore = false;
 document.getElementById("statsPanel").style.display = "none";
 document.getElementById("statsBtn").innerText = "📊 Statistik anzeigen";
   document.getElementById("pauseBtn").style.display = "block"; // 🔥 HIER
@@ -3868,7 +4032,7 @@ updateScoreUI();
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("status").style.display = "flex";
   document.getElementById("gameArea").style.display = "flex";
-document.getElementById("inventory").style.display = "none";   // ❌ ausblenden
+document.getElementById("inventory").style.display = "block";
 document.getElementById("itemBook").style.display = "block";   // ✅ bleibt sichtbar
 
   document.getElementById("timerBarContainer").style.display = "block";
@@ -3889,18 +4053,6 @@ document.getElementById("itemBook").style.display = "block";   // ✅ bleibt sic
 document.getElementById("excelFile").addEventListener("change", function(){
   importExcelAndStart();
 });
-
-document.getElementById("togglePinyin").addEventListener("change", function(){
-  showPinyin = this.checked;
-
-  console.log("Toggle:", showPinyin);
-
-  if(aktuelleVokabel){
-    starteFrage();
-  }
-});
-
-
 
 document.getElementById("modeSelector").addEventListener("change", function(){
 
@@ -3928,18 +4080,66 @@ document.getElementById("languageSelector").addEventListener("change", function(
 function renderInventory(){
 
   const inv = document.getElementById("inventory");
-if(!inv) return;
-
+  if(!inv) return;
 
   let html = "<h3>🎒 Items</h3>";
 
-  for(let key in achievements){
-if(achievements[key]?.unlocked && ITEMS[key]){
-      html += `${ITEMS[key].name}<br>`;
-    }
-  }
+  inventory.forEach(item => {
+    html += `
+      <div class="item-entry">
+        <button onclick="useItem('${item.id}')">
+          ${ITEMS[item.id].name} (${item.charges})
+        </button>
+      </div>
+    `;
+  });
 
   inv.innerHTML = html;
+}
+
+function addItem(id, amount = 1){
+  let item = inventory.find(i => i.id === id);
+
+  if(item){
+    item.charges += amount;
+  } else {
+    inventory.push({ id, charges: amount });
+  }
+
+  renderInventory();
+}
+
+function useItem(id){
+  let item = inventory.find(i => i.id === id);
+
+  if(!item || item.charges <= 0) return;
+
+  item.charges--;
+
+  applyItemEffect(id);
+
+  if(item.charges <= 0){
+    inventory = inventory.filter(i => i.id !== id);
+  }
+
+  renderInventory();
+}
+
+function applyItemEffect(id){
+
+  if(id === "shield"){
+    state.shieldActive = true;
+    document.getElementById("feedback").innerText = "🛡️ Schild aktiv!";
+  }
+
+  if(id === "clock"){
+    state.timeFreeze = true;
+    document.getElementById("feedback").innerText = "⏳ Zeit gestoppt!";
+
+    setTimeout(()=>{
+      state.timeFreeze = false;
+    }, 3000);
+  }
 }
 
 function renderItemBook(){
@@ -3959,13 +4159,12 @@ const unlocked = data?.unlocked && !data?.used;
       <b>${unlocked ? item.name : "❓ Unbekannt"}</b><br>
       <small>${unlocked ? item.desc : "Noch nicht freigeschaltet"}</small><br>
 
-      ${
-        unlocked 
-        ? `<div style="font-size:12px; opacity:0.8;">
-             🏆 ${data.reason}
-           </div>` 
-        : ""
-      }
+${unlocked 
+  ? `<div style="font-size:12px; opacity:0.8;">
+       🏆 ${item.unlock}
+     </div>` 
+  : ""
+}
 
 ${"⭐".repeat(item.stars || 1)}
     </div>
@@ -4036,67 +4235,77 @@ function checkEndAnswer(input, korrekt, index){
   const korrektListe = korrekt.map(w => w.toLowerCase());
 
   if(korrektListe.includes(value)){
-    feedback.innerHTML = `<span style="color:#00e600;">✔ Richtig!</span>`;
-    input.disabled = true;
-} else {
-  el.attempts++;
 
-  if(el.attempts >= 3){
+    feedback.innerHTML = `<span style="color:#00e600;">✔ Richtig!</span>`;
+    playSound("richtig");
+
+  } else {
+
+    endHadMistake = true;
+
     feedback.innerHTML = `
-      <span style="color:#00e600;">
-        ➜ ${korrekt.join(" / ")}
+      <span style="color:#ff4444;">
+        ✖ Falsch! ➜ ${korrekt.join(" / ")}
       </span>
     `;
-    input.disabled = true;
-  } else {
-    feedback.innerHTML = `❌ Versuch ${el.attempts}/3`;
 
-    // 🔥 WICHTIG: Cursor bleibt im Feld
+    playSound("falsch");
+
+    input.classList.add("shake");
+
     setTimeout(()=>{
-      input.focus();
-    }, 0);
+      input.classList.remove("shake");
+    }, 300);
   }
-}
+
+  input.disabled = true;
+
+  setTimeout(()=>{
+    input.focus();
+  }, 0);
 
   input.value = "";
 
-if(input.disabled){
-  endAnswersSolved++;
-// 👉 nächstes Input-Feld fokussieren
-const nextInput = document.getElementById("endInput_" + (index + 1));
+  if(input.disabled){
 
-if(nextInput && !nextInput.disabled){
-  nextInput.focus();
-}
-if(nextInput && !nextInput.disabled){
-  nextInput.focus();
-  nextInput.select(); // markiert evtl. vorhandenen Text
-}
+    endAnswersSolved++;
 
-  if(endAnswersSolved >= endAnswersTotal){
+    const nextInput = document.getElementById("endInput_" + (index + 1));
 
-    const btn = document.getElementById("retryBtn");
-    if(btn){
-      btn.disabled = false;
-      btn.innerText = "🔄 noch mal";
+    if(nextInput && !nextInput.disabled){
+      nextInput.focus();
+      nextInput.select();
     }
 
-    // 🎁 BELOHNUNG: Schutzschild
-achievements.shield.unlocked = true;
-achievements.shield.used = false; // 🔥 WICHTIG!
-achievements.shield.reason = "Alle Fehler korrigiert 🧠";
+    if(endAnswersSolved >= endAnswersTotal){
 
-saveAchievements();
+      const btn = document.getElementById("retryBtn");
 
-unlockAchievement("🛡️ Schutzschild erhalten!", "shield");
+      if(btn){
+        btn.disabled = false;
+        btn.innerText = "🔄 noch mal";
+      }
 
-// 🔥 ERZWINGE NEURENDER + UI UPDATE
-setTimeout(() => {
-  renderInventory();
-  renderItemBook();
-}, 50);
+      if(!endHadMistake){
+
+        achievements.shield.unlocked = true;
+        achievements.shield.used = false;
+        achievements.shield.reason = "Alle Fehler perfekt korrigiert 🧠";
+
+        saveAchievements();
+        unlockAchievement("🛡️ Schutzschild erhalten!", "shield");
+
+        setTimeout(() => {
+          renderInventory();
+          renderItemBook();
+        }, 50);
+
+      } else {
+        document.getElementById("feedback").innerText =
+          "❌ Nicht perfekt – kein Schild";
+      }
+    }
   }
-}
 }
 
 function initApp(){
@@ -4253,8 +4462,9 @@ else{
 const isPerfect = quote === 100;
 
 html += `
-  <div style="
-    padding:14px;
+<div style="
+  position: relative;
+  padding:14px;
     border-radius:14px;
     background:${bg};
     color:${quote >= 60 ? "#000" : "#fff"};
@@ -4274,25 +4484,25 @@ overflow:hidden;
 padding:10px;
     font-weight:bold;
   ">
-      <div style="font-size:14px; opacity:0.8;">
-        #${index+1}
-      </div>
 
-      <div style="margin:6px 0;">
-        ${key}
-      </div>
+<div style="
+  margin:8px 0;
+  font-size:20px;
+  line-height:1.3;
+">
+  ${key.split("→").join("<br>→ ")}
+</div>
 
       <div style="font-size:14px;">
         ✅ ${s.correct} | ❌ ${s.wrong}
       </div>
+<div class="tile-number">
+  #${index+1}
+</div>
+<div style="font-size:14px; opacity:0.8;">
+  ${quote}% ${isPerfect ? "👑" : ""}
+</div>
 
-      <div style="font-size:18px;">
-        ${quote}% ${isPerfect ? "👑" : ""}
-      </div>
-
-      <div style="font-size:12px; opacity:0.8;">
-        ${label}
-      </div>
   </div>
 `;
 });
