@@ -4,10 +4,78 @@
 <head>
 <meta charset="UTF-8">
 <title>Unregelmäßige Verben - Vokabelspiel MA</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <style>
-body { font-family:'Segoe UI',sans-serif; text-align:center; margin:0; padding:0; transition: background 0.5s;}
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  transition: background 0.5s;
+}
 h1 { margin-top:20px; transition: color 0.5s;}
+#gameTitle {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+
+  color: white;
+
+  margin-top: 30px;
+
+  /* 🫧 Bubble */
+  background: linear-gradient(135deg, #2196f3, #1565c0);
+  padding: 14px 28px;
+  border-radius: 999px;
+
+  display: inline-block;
+
+  /* 💎 Tiefe */
+  box-shadow:
+    0 6px 0 #0d47a1,
+    0 10px 25px rgba(0,0,0,0.25);
+
+  /* 🪄 Animation beim Laden */
+  animation: titlePop 0.8s ease;
+}
+
+#gameTitle span {
+  display: inline-block;
+  transform: translateY(0);
+  transition: 0.2s;
+}
+
+#gameTitle:hover span {
+  transform: translateY(-3px);
+}
+
+
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes titlePop {
+  0% {
+    transform: scale(0.6) translateY(-20px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1) translateY(5px);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+#gameTitle:hover {
+  transform: scale(1.05);
+  transition: 0.2s;
+}
+
 #themeSelector { margin:10px; padding:5px; font-size:16px;}
 #status {
   display:flex;
@@ -284,7 +352,7 @@ position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 90px; /* 🔥 Abstand nach oben */
+  margin-top: 20px; /* 🔥 Abstand nach oben */
 
 
 }
@@ -377,14 +445,14 @@ position: relative;
 }
 
 
-#startScreen {
-  margin-top: 60px;
-}
-
 .start-box h2 {
-  margin: 4px 0 2px 0;   /* oben / unten reduziert */
-}
+  font-size: 18px;     /* 🔥 kleiner */
+  font-weight: 600;
 
+  margin: 6px 0 4px 0; /* 🔥 weniger Abstand */
+
+  opacity: 0.8;        /* ✨ dezenter */
+}
 
 #startScreen input,
 #startScreen select {
@@ -625,10 +693,52 @@ position: relative;
   display: none !important;
 }
 
-/* 🔥 WICHTIG: grüner Button bleibt sichtbar */
 #startDefaultBtn {
-  display: block !important;
+  background: #2196f3; /* 🔵 Blau */
+  color: white;
+
+  font-size: 22px;
+  font-weight: bold;
+
+  padding: 16px;
+
+  border-radius: 16px;
+  border: none;
+
+  cursor: pointer;
+
+  /* 💎 Duolingo-Style Schatten */
+  box-shadow:
+    0 6px 0 #1565c0,
+    0 10px 25px rgba(0,0,0,0.25);
+
+  transition: all 0.2s ease;
 }
+
+#startDefaultBtn:hover {
+  transform: translateY(-2px);
+}
+
+#startDefaultBtn:active {
+  transform: translateY(2px);
+
+  box-shadow:
+    0 2px 0 #1565c0,
+    0 5px 15px rgba(0,0,0,0.2);
+}
+
+
+#startDefaultBtn:hover {
+  transform: translateY(-2px);
+}
+
+#startDefaultBtn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #3fa800,
+    0 5px 15px rgba(0,0,0,0.2);
+}
+
 .highscore-title {
   font-size: 20px;
   font-weight: 500;
@@ -783,41 +893,64 @@ font-size:32px;
 
 }
 .start-box {
-  align-items: stretch; /* 🔥 statt center */
-
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(10px);
-
-  padding: 20px 25px;
-  border-radius: 20px;
-
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-
   display: flex;
   flex-direction: column;
-  gap: 10px;
- max-width: 750px;     /* 🔥 NEU → begrenzt Breite */
+  gap: 12px;
+
   width: 90%;
-} /* 🔥 DIESE KLAMMER HAT GEFEHLT */
+  max-width: 600px;
+
+  margin: -20px auto 0 auto;  /* zieht sie nach oben */
+
+
+  /* 🎨 Duolingo Card */
+  background: #ffffff;
+  border-radius: 24px;
+
+  padding: 20px 24px;
+
+  /* 💎 Schatten wie App */
+  box-shadow:
+    0 8px 0 #e0e0e0,
+    0 15px 35px rgba(0,0,0,0.15);
+
+  border: 2px solid #f1f1f1;
+}
 
 .start-box label {
   display: grid;
-  grid-template-columns: 220px 1fr; /* 🔥 feste Label-Breite */
+  grid-template-columns: 180px 1fr; /* links Text, rechts Feld */
   align-items: center;
-  gap: 20px;
-  transform: translateX(60px); /* 👉 nach rechts schieben */
 
+  gap: 15px;
 
-  width: 100%;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
+
   text-align: left;
 }
 
 .start-box input,
 .start-box select {
   width: 100%;
-  box-sizing: border-box;   /* 🔥 DAS ist der Gamechanger */
 
+  padding: 12px 14px;
+  font-size: 18px;
+
+  border-radius: 14px;
+  border: 2px solid #e0e0e0;
+
+  background: #f9f9f9;
+
+  transition: all 0.2s ease;
+}
+
+.start-box input:focus,
+.start-box select:focus {
+  border-color: #2196f3;
+  background: #fff;
+
+  box-shadow: 0 0 0 4px rgba(33,150,243,0.2);
 }
 
 .start-box button {
@@ -825,7 +958,7 @@ font-size:32px;
 }
 
 #startScreen {
-  margin-top: 80px;
+  margin-top: 20px;
 }
 
 
@@ -1588,6 +1721,51 @@ padding:18px 12px;
   color: #fff !important;
 }
 
+#gameTitle::before {
+  content: "🎯";
+  margin-right: 10px;
+}
+
+.stats-rank {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+
+  font-size: 14px;
+  opacity: 0.7;
+  font-weight: bold;
+}
+
+.stats-word {
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 1.2;
+
+  word-break: break-word;
+}
+
+.stats-meta {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-top: 6px;
+}
+
+.stats-percent {
+  font-size: 13px;   /* 🔥 größer */
+  font-weight: bold; /* 🔥 stärker sichtbar */
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.perfect {
+  border: 3px solid gold;
+  box-shadow: 
+    0 0 10px gold,
+    0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+
+
 
 
 
@@ -1604,18 +1782,20 @@ padding:18px 12px;
 
 <img src="logo.png" id="logo">
 <div id="startItemBook" class="highscoreBox"></div>
-<h1 id="gameTitle">Vokabelspiel MA 🎮</h1>
+<h1 id="gameTitle">
+  Vokabelspiel&nbsp;MA 🎮
+</h1>
 
 <div id="startScreen">
 
   <div class="start-box">
 
 
-    <label>Dein Name:
+    <label>Name:
       <input id="playerName" placeholder="Name eingeben">
     </label>
 
-<label>Gesamtzeit wählen:
+<label>Zeit:
   <select id="timeSelector">
     <option value="60">1 Minute</option>
     <option value="180">3 Minuten</option>
@@ -1817,6 +1997,19 @@ const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
 
 console.log("JS läuft!");
+
+function getContrastColor(hex){
+
+  hex = hex.replace("#","");
+
+  let r = parseInt(hex.substr(0,2),16);
+  let g = parseInt(hex.substr(2,2),16);
+  let b = parseInt(hex.substr(4,2),16);
+
+  let brightness = (r*299 + g*587 + b*114) / 1000;
+
+  return brightness > 150 ? "#000" : "#fff";
+}
 
 const ITEMS = {
   sword_fire: {
@@ -3042,16 +3235,16 @@ if(spielModus === "learn"){
     if(!bar || !el) return;
 
     const total = aktuelleListe.length || 1;
-    const current = Math.min(aktuelleFrage + 1, total);
+const current = Math.min(aktuelleFrage, total);
 
     const pr = (current / total) * 100;
     bar.style.width = pr + "%";
 
-    if(wiederholModus){
-      el.innerText = "🔁 Fehler: " + current + " / " + total;
-    } else {
-      el.innerText = "📚 " + current + " / " + total;
-    }
+if(wiederholModus){
+  el.innerText = "🔥 " + current + " / " + total;  // 🔥 klarer Modus
+} else {
+  el.innerText = "📚 " + current + " / " + total;
+}
 
   } catch(err){
     console.error("💥 Progress Fehler:", err);
@@ -4550,90 +4743,68 @@ entries.sort((a, b) => {
   return quoteA - quoteB;
 });
 
- entries.forEach(([key, s], index)=>{
+entries.forEach(([key, s], index)=>{
 
   const total = s.correct + s.wrong;
   const quote = total > 0 ? Math.round((s.correct / total) * 100) : 0;
 
-  let bg = "#9e9e9e"; // grau (noch nie gespielt)
+  let bg = "#9e9e9e";
   let label = "neu";
 
   if(total > 0){
-    if(quote < 40){
-      bg = "#f44336"; // 🔴
+    if(quote <= 25){
+      bg = "#f44336";
       label = "schwer";
     }
-    else if(quote < 60){
-      bg = "#ff9800"; // 🟠
+    else if(quote <= 50){
+      bg = "#ff9800";
       label = "unsicher";
     }
-    else if(quote < 80){
-      bg = "#ffeb3b"; // 🟡
+    else if(quote <= 75){
+      bg = "#ffeb3b";
       label = "ok";
     }
-else{
-  bg = "#4caf50"; // 🟢
-
-  if(quote === 100){
-    label = "perfekt";
-  } else {
-    label = "sicher";
-  }
-}
+    else{
+      bg = "#4caf50";
+      label = quote === 100 ? "perfekt" : "sicher";
+    }
   }
 
-const isPerfect = quote === 100;
+  const isPerfect = quote === 100;
+  const textColor = getContrastColor(bg);
+const perfectClass = isPerfect ? "perfect" : "";
 
 html += `
-<div style="
-  position: relative;
-  padding:14px;
-    border-radius:14px;
+  <div class="${perfectClass}" style="
     background:${bg};
-    color:${quote >= 60 ? "#000" : "#fff"};
-    text-align:center;
-
-    border: ${isPerfect ? "3px solid gold" : "none"};
-    box-shadow: ${isPerfect 
-      ? "0 0 20px gold, 0 4px 12px rgba(0,0,0,0.2)" 
-      : "0 4px 12px rgba(0,0,0,0.2)"};
-
-height:100%;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-overflow:hidden;
-padding:10px;
-    font-weight:bold;
+    color:${textColor};
+    padding:10px;
+    border-radius:10px;
+    position: relative;
   ">
 
-<div style="
-  margin:8px 0;
-  font-size:20px;
-  line-height:1.3;
-">
+<div class="stats-word">
   ${key.split("→").join("<br>→ ")}
 </div>
 
-      <div style="font-size:14px;">
-        ✅ ${s.correct} | ❌ ${s.wrong}
-      </div>
-<div class="tile-number">
-  #${index+1}
+<div class="stats-meta">
+  ✅ ${s.correct} | ❌ ${s.wrong}
 </div>
-<div style="font-size:14px; opacity:0.8;">
+<div class="stats-rank">#${index+1}</div>
+<div class="stats-percent">
   ${quote}% ${isPerfect ? "👑" : ""}
 </div>
+    </div>
+  `;
 
-  </div>
-`;
-});
+}); // ✅ ENDE
 
   html += "</div>";
 
-  panel.innerHTML = html;
-  panel.style.display = "block";
+panel.innerHTML = html;
+panel.style.display = "block";
+
+autoResizeStatsWords(); // 🔥 HIER EINFÜGEN
 
   // 🔥 NEU: Button-Text ändern
   btn.innerText = "❌ Statistik ausblenden";
@@ -4695,38 +4866,50 @@ function startWeakTraining(){
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-  vokabeln.forEach(v => {
+vokabeln.forEach(v => {
 
-    const key = (v[frageLang] || []).join("/") + "→" + (v[antwortLang] || []).join("/");
+  const key = (v[frageLang] || []).join("/") + "→" + (v[antwortLang] || []).join("/");
 
-    const stats = vocabStats[key];
+  const stats = vocabStats[key];
 
-    if(!stats) return;
+  // ✅ NEU: noch nie gelernt → zählt als schwach
+  if(!stats){
+    weakList.push(v);
+    return;
+  }
 
-    const total = stats.correct + stats.wrong;
-    if(total === 0) return;
+  const total = stats.correct + stats.wrong;
 
-    const quote = (stats.correct / total) * 100;
+  // ✅ Sicherheit (eigentlich selten, aber sauber)
+  if(total === 0){
+    weakList.push(v);
+    return;
+  }
 
-    if(quote <= 50){
-      weakList.push(v);
-    }
+  const quote = (stats.correct / total) * 100;
 
-  });
+  if(quote <= 50){
+    weakList.push(v);
+  }
+
+});
 
   if(weakList.length === 0){
     alert("🎉 Keine schwachen Begriffe vorhanden!");
     return;
   }
 
-  aktuelleListe = weakList;
-  shuffleArray(aktuelleListe);
+aktuelleListe = weakList;
+shuffleArray(aktuelleListe);
 
-  gameEnded = false;
-  state.punkte = 0;
-  aktuelleFrage = 0;
-  leben = 3;
-  combo = 0;
+wiederholModus = true;     // ✅ HIER NEU
+beantwortet = 0;           // ✅ HIER NEU
+
+gameEnded = false;
+state.punkte = 0;
+aktuelleFrage = 0;
+leben = 3;
+combo = 0;
 
   document.getElementById("statsPanel").style.display = "none";
 
@@ -4743,6 +4926,26 @@ function startWeakTraining(){
   startGesamtTimer();
   starteFrage();
 }
+
+function autoResizeStatsWords(){
+  const elements = document.querySelectorAll(".stats-word");
+
+  elements.forEach(el => {
+
+    let size = 18;
+    el.style.fontSize = size + "px";
+
+    // max Höhe = 2 Zeilen
+    const maxHeight = parseFloat(getComputedStyle(el).lineHeight) * 2;
+
+    while(el.scrollHeight > maxHeight && size > 10){
+      size--;
+      el.style.fontSize = size + "px";
+    }
+
+  });
+}
+
 
 
 
