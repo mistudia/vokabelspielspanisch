@@ -2,6 +2,7 @@
 
 <html lang="de">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <meta charset="UTF-8">
 <title>Unregelmäßige Verben - Vokabelspiel MA</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -933,6 +934,8 @@ font-size:32px;
 .start-box input,
 .start-box select {
   width: 100%;
+  box-sizing: border-box;   /* 🔥 DAS IST DER FIX */
+
 
   padding: 12px 14px;
   font-size: 18px;
@@ -1764,6 +1767,55 @@ padding:18px 12px;
     0 0 20px rgba(255, 215, 0, 0.6);
 }
 
+#premiumPopup {
+  display: none;
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 20000;
+
+  justify-content:center;
+  align-items:center;
+}
+
+.premium-card {
+  background: linear-gradient(135deg, #ffffff, #e3f2fd);
+  color:#000;
+  padding:30px;
+  border-radius:20px;
+  max-width:400px;
+  width:90%;
+  text-align:center;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+.subtitle {
+  opacity:0.8;
+  margin-bottom:20px;
+}
+
+.premium-features {
+  text-align:left;
+  margin:20px 0;
+  font-size:18px;
+}
+
+.price {
+  font-size:24px;
+  font-weight:bold;
+  margin:15px 0;
+  color:#ff9800;
+}
+
+.premium-buttons {
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
 
 
 
@@ -1785,6 +1837,21 @@ padding:18px 12px;
 <h1 id="gameTitle">
   Vokabelspiel&nbsp;MA 🎮
 </h1>
+
+<div id="authBox" style="text-align:center; margin-top:20px;">
+
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Passwort">
+
+  <br><br>
+
+  <button onclick="signUp()">Registrieren</button>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+
+  <div id="userInfo"></div>
+
+</div>
 
 <div id="startScreen">
 
@@ -1969,6 +2036,29 @@ leben"></textarea>
 <div id="top10Popup"></div>
 <div id="overlay"></div>
 <div id="timeOverPopup"></div>
+<div id="premiumPopup">
+  <div class="premium-card">
+
+    <h2>💎 Werde Premium</h2>
+    <p class="subtitle">Lerne schneller & erreiche Highscores 🚀</p>
+
+    <div class="premium-features">
+      <div>🧠 Lernmodus (Spaced Repetition)</div>
+      <div>📊 Erweiterte Statistiken</div>
+      <div>🌍 Alle Sprachen freischalten</div>
+      <div>⏳ Unbegrenzte Spielzeit</div>
+      <div>🎮 Stärkere Items & Boni</div>
+    </div>
+
+    <div class="price">⭐ Nur 2,99€ einmalig</div>
+
+    <div class="premium-buttons">
+      <button id="buyPremiumBtn">💎 Premium holen</button>
+      <button id="closePremiumBtn">Später</button>
+    </div>
+
+  </div>
+</div>
 
 
 <audio id="richtig" src="sound.mp3"></audio>
@@ -1979,6 +2069,10 @@ leben"></textarea>
 window.onerror = function(msg, url, line, col, error){
   console.error("💥 ERROR:", msg, "at", line + ":" + col, error);
 };
+
+let currentUser = null;
+let userProfile = null;
+
 function resetGameState(){
 
   clearInterval(timerID);
@@ -1995,6 +2089,10 @@ function resetGameState(){
 
 const SUPABASE_URL = "https://bquxcyjcybpfwujtovng.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OyNRNaYaf3EqrY9fHoKHrA_mmR1Lby_";
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 console.log("JS läuft!");
 
@@ -2363,6 +2461,15 @@ const state = {
   liste: [],
   isPaused: false
 };
+
+function isPremium(){
+  return localStorage.getItem("premium") === "true";
+}
+
+function showPremiumPopup(){
+  if(isPremium()) return;
+  document.getElementById("premiumPopup").style.display = "flex";
+}
 
 function updateScoreUI(){
   const el = document.getElementById("punkte");
@@ -4021,6 +4128,9 @@ popup.classList.add("popup-end");
 
   document.getElementById("overlay").style.display = "block";
   popup.style.display = "block";
+if(!isPremium() && state.punkte > 50){
+  setTimeout(showPremiumPopup, 1000);
+}
 if(!wiederholModus){
   setTimeout(() => {
     giveLoot();
@@ -4344,6 +4454,12 @@ document.getElementById("excelFile").addEventListener("change", function(){
 
 document.getElementById("modeSelector").addEventListener("change", function(){
 
+  if(this.value === "learn" && !isPremium()){
+    showPremiumPopup();
+    this.value = "multiple";
+    return;
+  }
+
   spielModus = this.value;
   updateAllHighscores();
 
@@ -4611,6 +4727,7 @@ unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
 }
 
 function initApp(){
+checkUser();
 const savedName = localStorage.getItem("playerName");
   hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
 
@@ -4669,7 +4786,13 @@ function loadCustomVocabFromStorage(){
   console.log("📂 Custom Vokabeln geladen");
 }
 document.getElementById("statsBtn").onclick = function(){
-  showAllStats();
+
+  if(!isPremium()){
+    document.getElementById("premiumPopup").style.display = "flex";
+    return;
+  }
+
+  showStats();
 };
 
 function showAllStats(){
@@ -4946,11 +5069,121 @@ function autoResizeStatsWords(){
   });
 }
 
+document.getElementById("buyPremiumBtn").onclick = buyPremium;
 
+async function buyPremium(){
 
+  if(!currentUser){
+    alert("Bitte zuerst einloggen!");
+    return;
+  }
 
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({ premium: true })
+    .eq("id", currentUser.id);
 
+  if(error){
+    alert("Fehler beim Aktivieren");
+    console.error(error);
+    return;
+  }
 
+  userProfile.premium = true;
+
+  alert("🎉 Premium aktiviert!");
+  updateUserUI();
+
+  document.getElementById("premiumPopup").style.display = "none";
+}
+
+async function signUp(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const { error } = await supabaseClient.auth.signUp({ email, password });
+
+  if(error) return alert(error.message);
+
+  alert("✅ Registrierung erfolgreich!");
+}
+
+async function login(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error) return alert(error.message);
+
+  currentUser = data.user;
+  await loadUserProfile();
+  updateUserUI();
+}
+
+async function logout(){
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  userProfile = null;
+  updateUserUI();
+}
+
+async function loadUserProfile(){
+
+  if(!currentUser) return;
+
+  let { data } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", currentUser.id)
+    .single();
+
+  if(!data){
+    await supabaseClient.from("profiles").insert({
+      id: currentUser.id,
+      username: currentUser.email,
+      premium: false
+    });
+
+    data = { premium: false };
+  }
+
+  userProfile = data;
+}
+
+function isPremium(){
+  return userProfile && userProfile.premium === true;
+}
+
+function updateUserUI(){
+  const el = document.getElementById("userInfo");
+
+  if(currentUser){
+    el.innerHTML = `
+      👤 ${currentUser.email}
+      ${isPremium() ? "💎 Premium" : "🆓 Free"}
+    `;
+  } else {
+    el.innerText = "Nicht eingeloggt";
+  }
+}
+
+async function checkUser(){
+
+  const { data } = await supabaseClient.auth.getUser();
+
+  if(data.user){
+    currentUser = data.user;
+    await loadUserProfile();
+  }
+
+  updateUserUI();
+}
+
+checkUser();
 
 
 
