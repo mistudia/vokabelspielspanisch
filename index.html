@@ -345,7 +345,7 @@ transition:all 0.5s;
   justify-content: center;
   align-items: flex-start;
   gap: 0px;
-  margin-top: 20px;
+  margin-top: -20px;
 position: relative; 
 }
 
@@ -678,20 +678,29 @@ position: relative;
 /* 🔒 Lehrer-Modus komplett ausblenden */
 /* 🔒 Lehrer-Modus gezielt ausblenden */
 
-/* Textfelder weg */
-#inputLang1,
-#inputLang2 {
-  display: none !important;
+.locked {
+  opacity: 0.5;
+  filter: grayscale(80%);
+  pointer-events: none;
 }
 
-/* Excel Upload weg */
-#excelFile {
-  display: none !important;
-}
+.locked-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 
-/* gelber Button weg */
-#startCustomBtn {
-  display: none !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+
+  border-radius: 16px;
 }
 
 #startDefaultBtn {
@@ -1816,6 +1825,20 @@ padding:18px 12px;
   justify-content:center;
 }
 
+.locked-btn {
+  background: linear-gradient(135deg, #bbb, #888) !important;
+  color: #fff !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  opacity: 0.8;
+}
+
+.locked-btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+
 
 
 
@@ -2096,6 +2119,22 @@ const supabaseClient = supabase.createClient(
 
 console.log("JS läuft!");
 
+function updateTeacherModeUI(){
+
+  const isUserPremium = isPremium();
+
+  const startBtn = document.getElementById("startCustomBtn");
+
+  if(!startBtn) return;
+
+  if(isUserPremium){
+    startBtn.classList.remove("locked-btn");
+    startBtn.innerText = "📚 START mit eigenen Vokabeln";
+  } else {
+    startBtn.classList.add("locked-btn");
+    startBtn.innerText = "🔒 Premium nötig";
+  }
+}
 function getContrastColor(hex){
 
   hex = hex.replace("#","");
@@ -2214,7 +2253,7 @@ async function addHighscoreOnline(name, punkte, timestamp){
       },
 
       body: JSON.stringify({
-        name: name,
+  username: playerName || "Spieler",   // ✅ HIER rein
         score: punkte,
         time: aktuelleZeit,
         mode: spielModus,
@@ -2611,7 +2650,7 @@ async function updateAllHighscores(){
 // 🔥 LIVE SCORE EINFÜGEN
 if(!isCustomMode && playerName && !gameEnded){
   hs.push({
-    name: playerName,
+username: playerName,
     score: state.punkte,
     created_at: "live"
   });
@@ -4182,7 +4221,15 @@ let html = `<div class="wort-box">${frageText}${
 };
 
 document.getElementById("startCustomBtn").onclick = function(){
-isCustomMode = true; // ❗ Custom = kein Highscore
+
+  // 🔒 FREE USER → Popup statt Start
+  if(!isPremium()){
+    showPremiumPopup();
+    return;
+  }
+
+  // ✅ PREMIUM → normal starten
+  isCustomMode = true;
 
   const customList = parseCustomVocab();
 
@@ -4191,10 +4238,7 @@ isCustomMode = true; // ❗ Custom = kein Highscore
     return;
   }
 
-  // 💾 speichern
   localStorage.setItem("customVocab", JSON.stringify(customList));
-
-  // 🔥 aktivieren
   vokabeln = customList;
 
   document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln";
@@ -4377,8 +4421,11 @@ document.getElementById("startItemBook").style.display = "none";
   resetGameState();
 
   spielModus = document.getElementById("modeSelector").value;
+if(currentUser && userProfile){
+  playerName = userProfile.username;
+} else {
   playerName = document.getElementById("playerName").value.trim() || "Spieler";
-localStorage.setItem("playerName", playerName);
+}localStorage.setItem("playerName", playerName);
 
   gesamtSpielZeit = parseInt(document.getElementById("timeSelector").value);
 aktuelleZeit = gesamtSpielZeit;
@@ -4752,6 +4799,8 @@ if(savedName){
   initVoices();
 
   updateAllHighscores(); // 🔥 HIER
+  updateTeacherModeUI(); // ✅ GENAU HIER
+
 }
 
 window.addEventListener("load", initApp);
@@ -5093,6 +5142,8 @@ async function buyPremium(){
 
   alert("🎉 Premium aktiviert!");
   updateUserUI();
+  updateTeacherModeUI(); // ✅ GENAU HIER
+
 
   document.getElementById("premiumPopup").style.display = "none";
 }
@@ -5122,6 +5173,8 @@ async function login(){
   currentUser = data.user;
   await loadUserProfile();
   updateUserUI();
+  updateTeacherModeUI(); // ✅ HIER
+
 }
 
 async function logout(){
@@ -5129,6 +5182,8 @@ async function logout(){
   currentUser = null;
   userProfile = null;
   updateUserUI();
+  updateTeacherModeUI(); // ✅ HIER
+
 }
 
 async function loadUserProfile(){
@@ -5142,11 +5197,13 @@ async function loadUserProfile(){
     .single();
 
   if(!data){
-    await supabaseClient.from("profiles").insert({
-      id: currentUser.id,
-      username: currentUser.email,
-      premium: false
-    });
+const username = prompt("Wähle einen Benutzernamen:");
+
+await supabaseClient.from("profiles").insert({
+  id: currentUser.id,
+  username: username || currentUser.email,
+  premium: false
+});
 
     data = { premium: false };
   }
