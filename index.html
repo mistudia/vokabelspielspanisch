@@ -925,7 +925,7 @@ font-size:32px;
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0px;
 
 width: 1000px;
 max-width: none;
@@ -937,7 +937,7 @@ max-width: none;
   background: #ffffff;
   border-radius: 24px;
 
-  padding: 20px 24px;
+  padding: 14px 24px;
 
   /* 💎 Schatten wie App */
   box-shadow:
@@ -4631,7 +4631,7 @@ document.getElementById("excelFile").addEventListener("change", function(){
 
 document.getElementById("modeSelector").addEventListener("change", function(){
 
-  if(this.value === "learn" && !isPremium()){
+  if((this.value === "learn" || this.value === "typing") && !isPremium()){
     showPremiumPopup();
     this.value = "multiple";
     return;
@@ -5158,16 +5158,24 @@ function hidePremiumModes(){
     if(opt.value === "learn" || opt.value === "typing"){
 
       if(!isPremium()){
-        opt.style.display = "none";   // 🔒 Free → verstecken
+        opt.disabled = true; // 🔒 sichtbar, aber nicht auswählbar
+
+        if(!opt.innerText.includes("🔒")){
+          opt.innerText += " 🔒";
+        }
+
       } else {
-        opt.style.display = "block";  // 💎 Premium → anzeigen
+        opt.disabled = false;
+
+        // 🔓 Schloss entfernen
+        opt.innerText = opt.innerText.replace(" 🔒", "");
       }
 
     }
 
   });
 
-  // 👉 nur Free-User auf multiple zwingen
+  // 👉 Free-User bleiben automatisch auf Multiple Choice
   if(!isPremium()){
     selector.value = "multiple";
   }
