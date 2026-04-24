@@ -2975,7 +2975,7 @@ const isLive = e.created_at === "live";
   else if(i === 2) klasse = "bronze";
 
 const isNew =
-  e.name === playerName &&
+  e.name === userName &&
   e.score === lastScore &&
   e.created_at === lastTimestamp;
 
@@ -2999,7 +2999,7 @@ else if(i === 2) medal = "🥉 ";
 
 html += `
   <div class="highscore-item ${klasse}">
-    ${medal}${i+1}. ${e.name}: ${e.score}
+    ${medal}${i+1}. ${e.username}: ${e.score}
   </div>
 `;
 
