@@ -204,12 +204,14 @@ transition:all 0.5s;
 }
 /* --- Antwortbuttons 2x2, größere Größe, zentriert --- */
 #antworten {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 Spalten */
   gap: 15px;
-  flex-wrap: wrap;   /* 👉 bricht um, falls nötig */
+
+  max-width: 600px;
   margin: 20px auto;
 }
+
 
 
 #checkBtn {
@@ -257,13 +259,22 @@ transition:all 0.5s;
 
 
 #antworten button {
-  min-width: 150px;
-  padding: 15px 20px;
-  font-size: 24px;
+  width: 100%;           /* füllt Grid-Zelle */
+  padding: 20px;
+  font-size: 22px;
+    min-width: 120px;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
+  background: linear-gradient(135deg, #1a237e, #3949ab);
+  color: white;
+  border: 2px solid #fff;
 }
+
+#antworten button:hover {
+  background: #ff9800;
+  color: black;
+}
+
+
 /* 🔥 COMBO ANIMATION */
 @keyframes firePulse {
   0% { transform: scale(1); filter: brightness(1); }
@@ -1380,10 +1391,6 @@ filter: brightness(1.2);
     margin-top: 20px;
   }
 
-  #antworten button {
-    font-size: 18px;
-    min-width: 120px;
-  }
 
   .wort-box {
     font-size: 26px;
@@ -1838,8 +1845,69 @@ padding:18px 12px;
   box-shadow: none !important;
 }
 
+.highscore-rank {
+  font-size: 14px;
+  opacity: 0.7;
+  font-weight: bold;
+}
 
+.highscore-name {
+  font-size: 18px;
+  font-weight: 600;
+}
 
+.highscore-points {
+  font-size: 20px;
+  font-weight: bold;
+
+  margin-top: 6px;
+
+  background: linear-gradient(135deg, #ffd54f, #ff9800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.highscore-item.gold {
+  box-shadow: 0 0 20px rgba(255,215,0,0.8);
+}
+
+.highscore-item.silver {
+  box-shadow: 0 0 20px rgba(192,192,192,0.8);
+}
+
+.highscore-item.bronze {
+  box-shadow: 0 0 20px rgba(205,127,50,0.8);
+}
+
+#authBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+  flex-wrap: wrap; /* optional für mobile */
+
+  margin: 10px auto 20px auto;
+
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+
+  padding: 10px 15px;
+  border-radius: 12px;
+
+  width: fit-content;
+}
+
+#authBox input {
+  width: 140px;
+  padding: 4px;
+  font-size: 12px;
+}
+
+#authBox button {
+  font-size: 12px;
+  padding: 4px;
+}
 
 
 
@@ -1866,7 +1934,6 @@ padding:18px 12px;
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Passwort">
 
-  <br><br>
 
   <button onclick="signUp()">Registrieren</button>
   <button onclick="login()">Login</button>
@@ -2501,10 +2568,6 @@ const state = {
   liste: [],
   isPaused: false
 };
-
-function isPremium(){
-  return localStorage.getItem("premium") === "true";
-}
 
 function showPremiumPopup(){
   if(isPremium()) return;
@@ -4223,6 +4286,9 @@ let html = `<div class="wort-box">${frageText}${
 
 document.getElementById("startCustomBtn").onclick = function(){
 
+  console.log("CLICK");                // 👈 HIER
+  console.log(parseCustomVocab());     // 👈 HIER
+
   // 🔒 FREE USER → Popup statt Start
   if(!isPremium()){
     showPremiumPopup();
@@ -4247,7 +4313,6 @@ document.getElementById("startCustomBtn").onclick = function(){
 
   startGame();
 };
-
 
 
 document.getElementById("startDefaultBtn").onclick = function(){
@@ -4295,6 +4360,10 @@ function parseCustomVocab(){
   const text1 = document.getElementById("inputLang1").value.trim();
   const text2 = document.getElementById("inputLang2").value.trim();
 
+  const lang = document.getElementById("languageSelector").value.split("-");
+  const frageLang = lang[0];
+  const antwortLang = lang[1];
+
   if(!text1 || !text2) return null;
 
   const lines1 = text1.split("\n");
@@ -4315,14 +4384,14 @@ function parseCustomVocab(){
 
     if(!l1 || !l2) continue;
 
-customList.push({
-  [frageLang]: l1.split("/"),
-  [antwortLang]: l2.split("/"),
-  en: [],
-  fr: [],
-  box: 1,
-  next: 0
-});
+    customList.push({
+      [frageLang]: l1.split("/"),
+      [antwortLang]: l2.split("/"),
+      en: [],
+      fr: [],
+      box: 1,
+      next: 0
+    });
   }
 
   if(customList.length === 0) return null;
@@ -4776,6 +4845,10 @@ unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
 
 function initApp(){
 checkUser();
+
+  hidePremiumModes();      // 🔥 HIER
+  updateTeacherModeUI();   // 🔥 und HIER
+
 const savedName = localStorage.getItem("playerName");
   hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
 
@@ -5018,17 +5091,26 @@ function checkEndAnswerClick(index){
 function hidePremiumModes(){
 
   const selector = document.getElementById("modeSelector");
-
   const options = selector.querySelectorAll("option");
 
   options.forEach(opt => {
+
     if(opt.value === "learn" || opt.value === "typing"){
-      opt.style.display = "none";
+
+      if(!isPremium()){
+        opt.style.display = "none";   // 🔒 Free → verstecken
+      } else {
+        opt.style.display = "block";  // 💎 Premium → anzeigen
+      }
+
     }
+
   });
 
-  // Sicherheit: immer auf Multiple setzen
-  selector.value = "multiple";
+  // 👉 nur Free-User auf multiple zwingen
+  if(!isPremium()){
+    selector.value = "multiple";
+  }
 }
 
 function startWeakTraining(){
@@ -5148,6 +5230,8 @@ async function buyPremium(){
   alert("🎉 Premium aktiviert!");
   updateUserUI();
   updateTeacherModeUI(); // ✅ GENAU HIER
+  hidePremiumModes(); // 🔥 GANZ WICHTIG
+
 
 
   document.getElementById("premiumPopup").style.display = "none";
@@ -5179,6 +5263,8 @@ async function login(){
   await loadUserProfile();
   updateUserUI();
   updateTeacherModeUI(); // ✅ HIER
+  hidePremiumModes(); // 🔥 HIER hinzufügen
+
 
 }
 
@@ -5188,6 +5274,8 @@ async function logout(){
   userProfile = null;
   updateUserUI();
   updateTeacherModeUI(); // ✅ HIER
+  hidePremiumModes(); // 🔥 HIER
+
 
 }
 
@@ -5243,6 +5331,10 @@ async function checkUser(){
   }
 
   updateUserUI();
+
+  // 🔥 DAS FEHLT:
+  hidePremiumModes();
+  updateTeacherModeUI();
 }
 
 checkUser();
