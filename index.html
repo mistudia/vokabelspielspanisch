@@ -907,8 +907,8 @@ font-size:32px;
   flex-direction: column;
   gap: 12px;
 
-  width: 90%;
-  max-width: 600px;
+width: 1000px;
+max-width: none;
 
   margin: -20px auto 0 auto;  /* zieht sie nach oben */
 
@@ -1918,6 +1918,7 @@ padding:18px 12px;
 </select>
 </label>
 
+<button id="startDefaultBtn">🔄 START mit <br>Standard-Vokabeln</button>
 
 <hr style="width:80%; margin:20px auto;">
 
@@ -1941,7 +1942,6 @@ leben"></textarea>
   </div>
 
 <div class="button-group">
-  <button id="startDefaultBtn">🔄 START mit <br>Standard-Vokabeln</button>
   <button id="startCustomBtn">📚 START mit <br>eigenen Vokabeln</button>
 <input type="file" id="excelFile" accept=".xlsx,.xls">
 </div>
@@ -2066,6 +2066,8 @@ leben"></textarea>
     <p class="subtitle">Lerne schneller & erreiche Highscores 🚀</p>
 
     <div class="premium-features">
+  <div>📚 Eigene Vokabeln & Sätze üben</div> <!-- 👈 NEU -->
+
       <div>🧠 Lernmodus (Spaced Repetition)</div>
       <div>📊 Erweiterte Statistiken</div>
       <div>🌍 Alle Sprachen freischalten</div>
@@ -2132,8 +2134,7 @@ function updateTeacherModeUI(){
     startBtn.innerText = "📚 START mit eigenen Vokabeln";
   } else {
     startBtn.classList.add("locked-btn");
-    startBtn.innerText = "🔒 Premium nötig";
-  }
+startBtn.innerText = "📚 START mit eigenen Vokabeln 🔒";  }
 }
 function getContrastColor(hex){
 
@@ -5119,6 +5120,10 @@ function autoResizeStatsWords(){
 }
 
 document.getElementById("buyPremiumBtn").onclick = buyPremium;
+
+document.getElementById("closePremiumBtn").onclick = function(){
+  document.getElementById("premiumPopup").style.display = "none";
+};
 
 async function buyPremium(){
 
