@@ -2132,7 +2132,10 @@ button {
   <div class="start-box">
 
 
-    <label>Name:
+    <label>Name
+<label>Klasse / Gruppe:
+  <input id="groupInput" placeholder="z.B. 7A">
+</label>
       <input id="playerName" placeholder="Name eingeben">
     </label>
 
@@ -2352,6 +2355,19 @@ window.onerror = function(msg, url, line, col, error){
 let currentUser = null;
 let userProfile = null;
 
+function getCurrentUsername(){
+  if(userProfile?.username){
+    return userProfile.username;
+  }
+
+  const inputName = document.getElementById("playerName")?.value?.trim();
+
+  if(inputName) return inputName;
+
+  return "Spieler";
+}
+
+
 function resetGameState(){
 
   clearInterval(timerID);
@@ -2477,6 +2493,7 @@ loadAchievements();
 
 
 async function loadHighscoresOnline(){
+const group = document.getElementById("groupInput")?.value || "global";
 aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
 spielModus = document.getElementById("modeSelector").value;
 aktuelleSprache = document.getElementById("languageSelector").value;
@@ -2486,6 +2503,7 @@ const url = SUPABASE_URL +
 &time=eq.${aktuelleZeit}
 &mode=eq.${spielModus}
 &language=eq.${aktuelleSprache}
+&group_id=eq.${group}   // 👈 HIER
 &order=score.desc,time.asc
 &limit=10`;
 
@@ -2510,6 +2528,7 @@ const url = SUPABASE_URL +
 }
 
 
+
 async function addHighscoreOnline(name, punkte, timestamp){
 
   try {
@@ -2522,14 +2541,15 @@ async function addHighscoreOnline(name, punkte, timestamp){
         "Prefer": "return=minimal"
       },
 
-      body: JSON.stringify({
-  username: playerName || "Spieler",   // ✅ HIER rein
-        score: punkte,
-        time: aktuelleZeit,
-        mode: spielModus,
-        language: aktuelleSprache,
-        created_at: timestamp   // ✅ korrekt
-      })
+body: JSON.stringify({
+  username: getCurrentUsername(),
+  score: punkte,
+  time: aktuelleZeit,
+  mode: spielModus,
+  language: aktuelleSprache,
+  group_id: document.getElementById("groupInput")?.value || "global", // 👈 HIER
+  created_at: timestamp
+})
     });
 
   } catch(err){
@@ -2758,6 +2778,7 @@ let aktuelleVokabel = null;
 let frageLang = "es";
 let antwortLang = "de";
 
+
 // --- Spielvariablen ---
 const state = {
   punkte: 0,
@@ -2788,7 +2809,8 @@ function updateScoreUI(){
   }
 }
 
-
+let profileLoaded = false;
+let scoreSaved = false;
 let aktuelleFrage=0, zeit=10, timerID, leben=3, playerName="";
 let beantwortet = 0;
 let isCustomMode = false; // ❗ NEU
@@ -2975,7 +2997,7 @@ const isLive = e.created_at === "live";
   else if(i === 2) klasse = "bronze";
 
 const isNew =
-  e.name === userName &&
+  e.username === playerName &&
   e.score === lastScore &&
   e.created_at === lastTimestamp;
 
@@ -2999,7 +3021,9 @@ else if(i === 2) medal = "🥉 ";
 
 html += `
   <div class="highscore-item ${klasse}">
-    ${medal}${i+1}. ${e.username}: ${e.score}
+    ${medal}${i+1}. 
+
+${e.username || "Spieler"}: ${e.score}
   </div>
 `;
 
@@ -3239,10 +3263,10 @@ spielBeenden("time");
 
 async function addHighscore(name, punkte){
 
-  if(isSavingScore){
-    console.log("🚫 Doppeltes Speichern verhindert");
-    return;
-  }
+if(isSavingScore || scoreSaved){
+  console.log("🚫 Doppeltes Speichern verhindert");
+  return;
+}
 
   isSavingScore = true;
 
@@ -3255,12 +3279,21 @@ async function addHighscore(name, punkte){
 
     const timestamp = new Date().toISOString();
 
-    await addHighscoreOnline(name, state.punkte, timestamp);
+if(!currentUser){
+  console.log("🚫 Kein Login → kein Highscore");
 
-    lastScore = state.punkte;
-    lastTimestamp = timestamp;
+  document.getElementById("feedback").innerText =
+    "🔒 Logge dich ein, um im Highscore zu erscheinen!";
 
-    await updateAllHighscores();
+  return;
+}
+
+await addHighscoreOnline(name, state.punkte, timestamp);
+
+lastScore = state.punkte;
+lastTimestamp = timestamp;
+
+await updateAllHighscores();
 
   } catch(err){
     console.error("❌ Fehler beim Speichern:", err);
@@ -4329,10 +4362,13 @@ function spielBeenden(reason){
 
   const popup = document.getElementById("timeOverPopup");
 
-  if(!wiederholModus){
-    addHighscore(playerName, state.punkte);
-    updateAllHighscores();
-  }
+if(!wiederholModus && !scoreSaved){
+
+  scoreSaved = true;   // 🔥 verhindert doppelt
+
+  addHighscore(playerName, state.punkte);
+  updateAllHighscores();
+}
 
   isPaused = false;
   gesamtTimerLaeuft = false;
@@ -4417,6 +4453,9 @@ const falsch = falschDetails.length;
 const richtig = gesamt - falsch;
 
 html += `<br><b>Punkte: ${state.punkte}</b>`;
+if(!currentUser){
+  html += "<br>🔒 Du bist nicht im Highscore (kein Login)";
+}
 html += `<br>📊 ${richtig} von ${gesamt} richtig`;
 html += `<br><br>`;
 
@@ -4679,6 +4718,7 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
+scoreSaved = false;
 gameEnded = false;
 isSavingScore = false;
 document.getElementById("statsPanel").style.display = "none";
@@ -5475,11 +5515,7 @@ async function login(){
 
   if(error) return alert(error.message);
 
-  currentUser = data.user;
-  await loadUserProfile();
-  updateUserUI();
-  updateTeacherModeUI(); // ✅ HIER
-  hidePremiumModes(); // 🔥 HIER hinzufügen
+await checkUser();   // 🔥 NUR DAS
 
 
 }
@@ -5488,6 +5524,7 @@ async function logout(){
   await supabaseClient.auth.signOut();
   currentUser = null;
   userProfile = null;
+profileLoaded = false;
   updateUserUI();
   updateTeacherModeUI(); // ✅ HIER
   hidePremiumModes(); // 🔥 HIER
@@ -5496,6 +5533,8 @@ async function logout(){
 }
 
 async function loadUserProfile(){
+if(profileLoaded) return;
+profileLoaded = true;
 
   if(!currentUser) return;
 
@@ -5505,18 +5544,25 @@ async function loadUserProfile(){
     .eq("id", currentUser.id)
     .single();
 
-  if(!data){
-const username = prompt("Wähle einen Benutzernamen:");
+if(!data){
 
-await supabaseClient.from("profiles").insert({
-  id: currentUser.id,
-  username: username || currentUser.email,
-  premium: false
-});
+  let username = prompt("Wähle deinen Benutzernamen:");
 
-    data = { premium: false };
+  if(!username || username.trim() === ""){
+    username = currentUser.email.split("@")[0];
   }
 
+  await supabaseClient.from("profiles").insert({
+    id: currentUser.id,
+    username: username,
+    premium: false
+  });
+
+  data = {
+    username: username,
+    premium: false
+  };
+}
   userProfile = data;
 }
 
