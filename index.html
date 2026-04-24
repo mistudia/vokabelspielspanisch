@@ -2979,7 +2979,7 @@ const isNew =
   e.score === lastScore &&
   e.created_at === lastTimestamp;
 
-if(e.name === playerName){
+if(e.username === playerName){
   klasse += " me";
 }
 // 🔥 Nur EIN grüner Eintrag
@@ -2988,7 +2988,7 @@ if(isLive){
   // 👉 während Spiel läuft → nur Live markieren
   klasse += " new-score";
 } 
-else if(e.name === playerName && e.score === lastScore){
+else if(e.username === playerName && e.score === lastScore){
   // 👉 nach Spiel → letzter Score markieren
   klasse += " new-score";
 }
@@ -5123,7 +5123,7 @@ document.getElementById("statsBtn").onclick = function(){
     return;
   }
 
-  showStats();
+showAllStats();
 };
 
 function showAllStats(){
