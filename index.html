@@ -2101,6 +2101,8 @@ button {
 
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 
 </head>
 <body class="day">
@@ -2392,14 +2394,13 @@ const supabaseClient = supabase.createClient(
 
 console.log("JS läuft!");
 
-function updateTeacherModeUI(){
+async function updateTeacherModeUI(){
 
-  const isUserPremium = isPremium();
+  const isUserPremium = await isPremium(); // ✅ FIX
 
   const startBtn = document.getElementById("startCustomBtn");
-  const excelBtn = document.getElementById("excelBtn"); // 🔥 NEU
+  const excelBtn = document.getElementById("excelBtn");
 
-  // 👉 START BUTTON
   if(startBtn){
     if(isUserPremium){
       startBtn.classList.remove("locked-btn");
@@ -2410,14 +2411,13 @@ function updateTeacherModeUI(){
     }
   }
 
-  // 👉 EXCEL BUTTON
   if(excelBtn){
     if(isUserPremium){
       excelBtn.classList.remove("locked-btn");
-excelBtn.innerText = "📥 START aus Excel";
+      excelBtn.innerText = "📥 START aus Excel";
     } else {
       excelBtn.classList.add("locked-btn");
-excelBtn.innerText = "📥 START aus Excel 🔒";
+      excelBtn.innerText = "📥 START aus Excel 🔒";
     }
   }
 }
@@ -2793,8 +2793,8 @@ const state = {
   isPaused: false
 };
 
-function showPremiumPopup(){
-  if(isPremium()) return;
+async function showPremiumPopup(){
+  if(await isPremium()) return;
   document.getElementById("premiumPopup").style.display = "flex";
 }
 
@@ -4532,18 +4532,23 @@ let html = `<div class="wort-box">${frageText}${
   }
 };
 
-document.getElementById("startCustomBtn").onclick = function(){
+document.getElementById("startCustomBtn").onclick = async function(){
 
-  console.log("CLICK");                // 👈 HIER
-  console.log(parseCustomVocab());     // 👈 HIER
+  console.log("Premium check läuft...");
 
-  // 🔒 FREE USER → Popup statt Start
-  if(!isPremium()){
-    showPremiumPopup();
-    return;
-  }
+  const isPremiumUser = await checkPremiumServer();
 
-  // ✅ PREMIUM → normal starten
+
+if(!isPremiumUser){
+  alert("🔒 Premium erforderlich");
+  return;
+}
+
+// 🔥 WICHTIG: erst HIER weiter
+startGame();
+
+  console.log("Premium bestätigt ✔");
+
   isCustomMode = true;
 
   const customList = parseCustomVocab();
@@ -4557,11 +4562,9 @@ document.getElementById("startCustomBtn").onclick = function(){
   vokabeln = customList;
 
   document.getElementById("gameTitle").innerText = "📚 Eigene Vokabeln";
-  document.getElementById("feedback").innerText = "✅ Eigene Vokabeln gestartet";
 
   startGame();
 };
-
 
 document.getElementById("startDefaultBtn").onclick = function(){
 
@@ -4818,18 +4821,23 @@ document.getElementById("excelFile").addEventListener("change", function(){
   importExcelAndStart();
 });
 
-document.getElementById("modeSelector").addEventListener("change", function(){
+document.getElementById("modeSelector").addEventListener("change", async function(){
 
-  if((this.value === "learn" || this.value === "typing") && !isPremium()){
-    showPremiumPopup();
-    this.value = "multiple";
-    return;
+  if(this.value === "learn" || this.value === "typing"){
+
+    const isPremiumUser = await checkPremiumServer();
+
+    if(!isPremiumUser){
+      showPremiumPopup();
+      this.value = "multiple";
+      return;
+    }
   }
 
   spielModus = this.value;
   updateAllHighscores();
-
 });
+
 
 document.getElementById("timeSelector").addEventListener("change", function(){
   updateAllHighscores(); // 🔥 NEU
@@ -5092,11 +5100,11 @@ unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
   }
 }
 
-function initApp(){
-checkUser();
+async function initApp(){
+  await checkUser();           // wichtig!
 
-  hidePremiumModes();      // 🔥 HIER
-  updateTeacherModeUI();   // 🔥 und HIER
+  await hidePremiumModes();
+  await updateTeacherModeUI();   // 🔥 und HIER
 
 const savedName = localStorage.getItem("playerName");
   hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
@@ -5122,7 +5130,7 @@ if(savedName){
   initVoices();
 
   updateAllHighscores(); // 🔥 HIER
-  updateTeacherModeUI(); // ✅ GENAU HIER
+ await updateTeacherModeUI(); // ✅ GENAU HIER
 
 }
 
@@ -5157,9 +5165,9 @@ function loadCustomVocabFromStorage(){
 
   console.log("📂 Custom Vokabeln geladen");
 }
-document.getElementById("statsBtn").onclick = function(){
+document.getElementById("statsBtn").onclick = async function(){
 
-  if(!isPremium()){
+  if(!(await isPremium())){
     document.getElementById("premiumPopup").style.display = "flex";
     return;
   }
@@ -5337,7 +5345,9 @@ function checkEndAnswerClick(index){
   checkEndAnswer(input, korrekt, index);
 }
 
-function hidePremiumModes(){
+async function hidePremiumModes(){
+
+  const premium = await isPremium();
 
   const selector = document.getElementById("modeSelector");
   const options = selector.querySelectorAll("option");
@@ -5346,8 +5356,8 @@ function hidePremiumModes(){
 
     if(opt.value === "learn" || opt.value === "typing"){
 
-      if(!isPremium()){
-        opt.disabled = true; // 🔒 sichtbar, aber nicht auswählbar
+      if(!premium){
+        opt.disabled = true;
 
         if(!opt.innerText.includes("🔒")){
           opt.innerText += " 🔒";
@@ -5355,17 +5365,12 @@ function hidePremiumModes(){
 
       } else {
         opt.disabled = false;
-
-        // 🔓 Schloss entfernen
         opt.innerText = opt.innerText.replace(" 🔒", "");
       }
-
     }
-
   });
 
-  // 👉 Free-User bleiben automatisch auf Multiple Choice
-  if(!isPremium()){
+  if(!premium){
     selector.value = "multiple";
   }
 }
@@ -5471,27 +5476,7 @@ async function buyPremium(){
     return;
   }
 
-  const { error } = await supabaseClient
-    .from("profiles")
-    .update({ premium: true })
-    .eq("id", currentUser.id);
-
-  if(error){
-    alert("Fehler beim Aktivieren");
-    console.error(error);
-    return;
-  }
-
-  userProfile.premium = true;
-
-  alert("🎉 Premium aktiviert!");
-  updateUserUI();
-  updateTeacherModeUI(); // ✅ GENAU HIER
-  hidePremiumModes(); // 🔥 GANZ WICHTIG
-
-
-
-  document.getElementById("premiumPopup").style.display = "none";
+  alert("⚠️ Premium kann nur über Zahlung freigeschaltet werden.");
 }
 
 async function signUp(){
@@ -5527,7 +5512,7 @@ async function logout(){
   userProfile = null;
 profileLoaded = false;
   updateUserUI();
-  updateTeacherModeUI(); // ✅ HIER
+  await updateTeacherModeUI(); // ✅ HIER
   hidePremiumModes(); // 🔥 HIER
 
 
@@ -5567,17 +5552,45 @@ if(!data){
   userProfile = data;
 }
 
-function isPremium(){
-  return userProfile && userProfile.premium === true;
+async function checkPremiumServer(){
+
+  const session = await supabaseClient.auth.getSession();
+
+  if(!session?.data?.session){
+    return false;
+  }
+
+  const res = await fetch(
+    "https://bquxcyjcybpfwujtovng.supabase.co/functions/v1/check-premium",
+    {
+      headers: {
+        Authorization: "Bearer " + session.data.session.access_token
+      }
+    }
+  );
+
+  if(!res.ok){
+    console.error("Server Fehler beim Premium Check");
+    return false;
+  }
+
+  const data = await res.json();
+
+  return data.premium === true;
+}
+async function isPremium(){
+  return await checkPremiumServer();
 }
 
-function updateUserUI(){
+async function updateUserUI(){
   const el = document.getElementById("userInfo");
 
   if(currentUser){
+    const premium = await isPremium();
+
     el.innerHTML = `
       👤 ${currentUser.email}
-      ${isPremium() ? "💎 Premium" : "🆓 Free"}
+      ${premium ? "💎 Premium" : "🆓 Free"}
     `;
   } else {
     el.innerText = "Nicht eingeloggt";
@@ -5593,24 +5606,24 @@ async function checkUser(){
     await loadUserProfile();
   }
 
-  updateUserUI();
-
-  // 🔥 DAS FEHLT:
-  hidePremiumModes();
-  updateTeacherModeUI();
+  await updateUserUI();        // ✅
+  await hidePremiumModes();    // ✅
+  await updateTeacherModeUI();// ✅
 }
 
 checkUser();
 
-document.getElementById("excelBtn").onclick = function(e){
+document.getElementById("excelBtn").onclick = async function(e){
 
-  if(!isPremium()){
-    e.preventDefault();   // ❗ verhindert Datei-Auswahl
-    showPremiumPopup();   // 💎 Popup anzeigen
+  const isPremiumUser = await checkPremiumServer();
+
+  if(!isPremiumUser){
+    e.preventDefault();
+    showPremiumPopup();
     return false;
   }
-
 };
+
 
 
 
@@ -5626,6 +5639,12 @@ document.getElementById("excelBtn").onclick = function(e){
 <div id="footer">
   © 2026 miStudia.de - Markus Autsch – Vokabelspiel MA
 </div>
+<script>
+const supabaseUrl = "https://DEIN-PROJEKT.supabase.co";
+const supabaseKey = "DEIN-ANON-KEY";
+
+</script>
+
 
 </body>
 
