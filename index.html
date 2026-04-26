@@ -5399,7 +5399,7 @@ let alleVokabeln = [
   ...vokabeln,
   ...adjVokabeln,
   ...nounVokabeln
-];
+].map(v => ({
   es: v[0].split("/"),
   de: v[1].split("/"),
   en: v[2].split("/"),
