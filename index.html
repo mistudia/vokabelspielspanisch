@@ -2161,6 +2161,16 @@ button {
 </label>
 
 <label>Sprache:
+
+<label>Kategorie:
+<select id="categorySelector">
+  <option value="verbs" selected>Verben</option>
+<option value="nouns">Nomen</option>
+  <option value="adjectives">Adjektive</option>
+  <option value="mixed">Gemischt</option>
+</select>
+</label>
+
 <select id="languageSelector">
 
   <option value="es-de">🇪🇸 → 🇩🇪</option>
@@ -2707,27 +2717,27 @@ amar – lieben – to love – aimer – 爱 (ài)
 aprender – lernen – to learn – apprendre – 学习 (xuéxí)
 ayudar – helfen – to help – aider – 帮助 (bāngzhù)
 beber – trinken – to drink – boire – 喝 (hē)
-buscar – suchen – to search/to look for – chercher – 找 (zhǎo)
+buscar – suchen – to look for – chercher – 找 (zhǎo)
 cerrar – schließen – to close – fermer – 关 (guān)
 cocinar – kochen – to cook – cuisiner – 做饭 (zuò fàn)
 comer – essen – to eat – manger – 吃 (chī)
 conocer – kennen – to know – connaître – 认识 (rènshi)
-correr – laufen/rennen – to run – courir – 跑 (pǎo)
+correr – rennen – to run – courir – 跑 (pǎo)
 creer – glauben – to believe – croire – 相信 (xiāngxìn)
 dar – geben – to give – donner – 给 (gěi)
 decir – sagen – to say – dire – 说 (shuō)
-empezar/comenzar – anfangen – to begin/to start – commencer – 开始 (kāishǐ)
+empezar – anfangen – to begin – commencer – 开始 (kāishǐ)
 encontrar – finden – to find – trouver – 找到 (zhǎodào)
 entender – verstehen – to understand – comprendre – 理解 (lǐjiě)
 escribir – schreiben – to write – écrire – 写 (xiě)
-escuchar/oír – hören – to hear/to listen – entendre/écouter – 听 (tīng)
-esperar – warten/hoffen – to wait/to hope – attendre/espérer – 等待 / 希望 (děngdài / xīwàng)
+escuchar/oír – hören – to listen/to hear – écouter/entendre – 听 (tīng)
+esperar – warten – to wait – attendre – 等待 (děngdài)
 hablar – sprechen – to speak/to talk – parler – 说话 (shuōhuà)
 hacer – machen/tun – to do/to make – faire – 做 (zuò)
-ir/caminar – gehen – to go/to walk – aller/marcher – 去 / 走路 (qù / zǒulù)
-jugar/tocar – spielen – to play – jouer – 玩 / 演奏 (wán / yǎnzòu)
+ir – gehen – to go – aller – 去 (qù)
+jugar – spielen – to play – jouer – 玩 (wán)
 leer – lesen – to read – lire – 读 (dú)
-llamar – heißen/anrufen – to call/to be called – appeler – 叫 / 打电话 (jiào / dǎ diànhuà)
+llamarse – heißen – to be called – appeler – 叫 (jiào)
 necesitar – brauchen – to need – avoir besoin – 需要 (xūyào)
 pagar – bezahlen – to pay – payer – 付钱 (fù qián)
 pedir – bestellen/bitten – to order/to ask for – demander/commander – 点 / 请求 (diǎn / qǐngqiú)
@@ -2736,7 +2746,7 @@ poder – können – to be able to – pouvoir – 能 / 可以 (néng / kěyǐ
 poner – setzen/stellen/legen – to put/to place – mettre – 放 (fàng)
 preferir – bevorzugen – to prefer – préférer – 更喜欢 (gèng xǐhuān)
 preguntar – fragen – to ask – demander – 问 (wèn)
-quedar – bleiben/verabreden – to stay/to meet – rester/se retrouver – 留下 / 见面 (liúxià / jiànmiàn)
+quedar – bleiben – to stay – rester – 留下 (liúxià)
 querer – wollen/wünschen – to want/to wish – vouloir – 想要 (xiǎng yào)
 responder – antworten – to answer – répondre – 回答 (huídá)
 saber – wissen – to know – savoir – 知道 (zhīdào)
@@ -2754,8 +2764,124 @@ vivir – leben/wohnen – to live – vivre – 住 / 生活 (zhù / shēnghuó
 volver – zurückkommen – to return – revenir – 回来 (huílái)
 `;
 
+let rawAdjText = `
+grande – groß – big – grand – 大 (dà)
+pequeño – klein – small – petit – 小 (xiǎo)
+bueno – gut – good – bon – 好 (hǎo)
+malo – schlecht – bad – mauvais – 坏 (huài)
+nuevo – neu – new – nouveau – 新 (xīn)
+viejo – alt – old – vieux – 老 (lǎo)
+rápido – schnell – fast – rapide – 快 (kuài)
+lento – langsam – slow – lent – 慢 (màn)
+fácil – einfach – easy – facile – 简单 (jiǎndān)
+difícil – schwierig – difficult – difficile – 难 (nán)
+feliz – glücklich – happy – heureux – 开心 (kāixīn)
+triste – traurig – sad – triste – 难过 (nánguò)
+rico – reich – rich – riche – 富有 (fùyǒu)
+pobre – arm – poor – pauvre – 穷 (qióng)
+bonito – schön – beautiful – beau – 漂亮 (piàoliang)
+feo – hässlich – ugly – laid – 丑 (chǒu)
+fuerte – stark – strong – fort – 强 (qiáng)
+débil – schwach – weak – faible – 弱 (ruò)
+caliente – heiß – hot – chaud – 热 (rè)
+frío – kalt – cold – froid – 冷 (lěng)
+`;
+
+let rawNounText = `
+casa – Haus – house – maison – 房子 (fángzi)
+persona – Person – person – personne – 人 (rén)
+hombre – Mann – man – homme – 男人 (nánrén)
+mujer – Frau – woman – femme – 女人 (nǚrén)
+niño – Kind – child – enfant – 孩子 (háizi)
+amigo – Freund – friend – ami – 朋友 (péngyou)
+familia – Familie – family – famille – 家庭 (jiātíng)
+comida – Essen – food – nourriture – 食物 (shíwù)
+agua – Wasser – water – eau – 水 (shuǐ)
+tiempo – Zeit – time – temps – 时间 (shíjiān)
+día – Tag – day – jour – 天 (tiān)
+noche – Nacht – night – nuit – 夜 (yè)
+año – Jahr – year – année – 年 (nián)
+mundo – Welt – world – monde – 世界 (shìjiè)
+trabajo – Arbeit – work – travail – 工作 (gōngzuò)
+escuela – Schule – school – école – 学校 (xuéxiào)
+libro – Buch – book – livre – 书 (shū)
+mesa – Tisch – table – table – 桌子 (zhuōzi)
+silla – Stuhl – chair – chaise – 椅子 (yǐzi)
+puerta – Tür – door – porte – 门 (mén)
+ventana – Fenster – window – fenêtre – 窗户 (chuānghu)
+calle – Straße – street – rue – 街道 (jiēdào)
+ciudad – Stadt – city – ville – 城市 (chéngshì)
+país – Land – country – pays – 国家 (guójiā)
+coche – Auto – car – voiture – 汽车 (qìchē)
+tren – Zug – train – train – 火车 (huǒchē)
+avión – Flugzeug – plane – avion – 飞机 (fēijī)
+dinero – Geld – money – argent – 钱 (qián)
+tienda – Geschäft – shop – magasin – 商店 (shāngdiàn)
+restaurante – Restaurant – restaurant – restaurant – 餐厅 (cāntīng)
+hotel – Hotel – hotel – hôtel – 酒店 (jiǔdiàn)
+doctor – Arzt – doctor – médecin – 医生 (yīshēng)
+profesor – Lehrer – teacher – professeur – 老师 (lǎoshī)
+estudiante – Schüler – student – étudiant – 学生 (xuéshēng)
+idioma – Sprache – language – langue – 语言 (yǔyán)
+palabra – Wort – word – mot – 单词 (dāncí)
+pregunta – Frage – question – question – 问题 (wèntí)
+respuesta – Antwort – answer – réponse – 回答 (huídá)
+nombre – Name – name – nom – 名字 (míngzi)
+edad – Alter – age – âge – 年龄 (niánlíng)
+mano – Hand – hand – main – 手 (shǒu)
+ojo – Auge – eye – œil – 眼睛 (yǎnjing)
+cabeza – Kopf – head – tête – 头 (tóu)
+corazón – Herz – heart – cœur – 心 (xīn)
+pan – Brot – bread – pain – 面包 (miànbāo)
+carne – Fleisch – meat – viande – 肉 (ròu)
+pescado – Fisch – fish – poisson – 鱼 (yú)
+fruta – Obst – fruit – fruit – 水果 (shuǐguǒ)
+verdura – Gemüse – vegetable – légume – 蔬菜 (shūcài)
+leche – Milch – milk – lait – 牛奶 (niúnǎi)
+café – Kaffee – coffee – café – 咖啡 (kāfēi)
+té – Tee – tea – thé – 茶 (chá)
+ropa – Kleidung – clothes – vêtements – 衣服 (yīfu)
+camisa – Hemd – shirt – chemise – 衬衫 (chènshān)
+pantalón – Hose – pants – pantalon – 裤子 (kùzi)
+zapato – Schuh – shoe – chaussure – 鞋 (xié)
+color – Farbe – color – couleur – 颜色 (yánsè)
+amor – Liebe – love – amour – 爱 (ài)
+vida – Leben – life – vie – 生活 (shēnghuó)
+problema – Problem – problem – problème – 问题 (wèntí)
+idea – Idee – idea – idée – 想法 (xiǎngfǎ)
+historia – Geschichte – history – histoire – 历史 (lìshǐ)
+juego – Spiel – game – jeu – 游戏 (yóuxì)
+música – Musik – music – musique – 音乐 (yīnyuè)
+película – Film – film – film – 电影 (diànyǐng)
+teléfono – Telefon – phone – téléphone – 电话 (diànhuà)
+computadora – Computer – computer – ordinateur – 电脑 (diànnǎo)
+foto – Foto – photo – photo – 照片 (zhàopiàn)
+padre – Vater – father – père – 父亲 (fùqīn)
+madre – Mutter – mother – mère – 母亲 (mǔqīn)
+hermano – Bruder – brother – frère – 兄弟 (xiōngdì)
+hermana – Schwester – sister – sœur – 姐妹 (jiěmèi)
+hijo – Sohn – son – fils – 儿子 (érzi)
+hija – Tochter – daughter – fille – 女儿 (nǚ'ér)
+jefe – Chef – boss – chef – 老板 (lǎobǎn)
+equipo – Team – team – équipe – 团队 (tuánduì)
+oficina – Büro – office – bureau – 办公室 (bàngōngshì)
+viaje – Reise – trip – voyage – 旅行 (lǚxíng)
+vacaciones – Urlaub – vacation – vacances – 假期 (jiàqī)
+playa – Strand – beach – plage – 海滩 (hǎitān)
+montaña – Berg – mountain – montagne – 山 (shān)
+mar – Meer – sea – mer – 海 (hǎi)
+clima – Wetter – weather – climat – 天气 (tiānqì)
+sol – Sonne – sun – soleil – 太阳 (tàiyáng)
+lluvia – Regen – rain – pluie – 雨 (yǔ)
+nieve – Schnee – snow – neige – 雪 (xuě)
+aire – Luft – air – air – 空气 (kōngqì)
+`;
+
 let level2 = parseVocabTextToArray(rawVocabText);
 
+let adjectivesRaw = parseVocabTextToArray(rawAdjText);
+
+let nounsRaw = parseVocabTextToArray(rawNounText);
 
 let vokabeln = level2.map(v => ({
   es: v[0].split("/"),
@@ -2773,6 +2899,36 @@ let vokabeln = level2.map(v => ({
 })).map(v => ({
   ...v,
   zh: v.zh.length ? v.zh : v.es   // 👈 FALLBACK
+}));
+
+let adjVokabeln = adjectivesRaw.map(v => ({
+  es: v[0].split("/"),
+  de: v[1].split("/"),
+  en: v[2].split("/"),
+  fr: v[3] ? v[3].split("/") : [],
+  zh: v[4] ? v[4].split("/") : [],
+  pinyin: v[5] ? v[5].split("/") : [],
+  hsk: 1,
+  box: 1,
+  next: 0
+})).map(v => ({
+  ...v,
+  zh: v.zh.length ? v.zh : v.es
+}));
+
+let nounVokabeln = nounsRaw.map(v => ({
+  es: v[0].split("/"),
+  de: v[1].split("/"),
+  en: v[2].split("/"),
+  fr: v[3] ? v[3].split("/") : [],
+  zh: v[4] ? v[4].split("/") : [],
+  pinyin: v[5] ? v[5].split("/") : [],
+  hsk: 1,
+  box: 1,
+  next: 0
+})).map(v => ({
+  ...v,
+  zh: v.zh.length ? v.zh : v.es
 }));
 
 let aktuelleVokabel = null;
@@ -4753,23 +4909,47 @@ if(currentUser && userProfile){
 aktuelleZeit = gesamtSpielZeit;
   gesamtSekunden = gesamtSpielZeit;
 
+// 🔥 Kategorie auswählen
+const category = document.getElementById("categorySelector").value;
+
+let basisListe = vokabeln;
+
+if(category === "adjectives"){
+  basisListe = adjVokabeln;
+}
+
+if(category === "nouns"){
+  basisListe = nounVokabeln;
+}
+
+if(category === "mixed"){
+  basisListe = [
+    ...vokabeln,
+    ...adjVokabeln,
+    ...nounVokabeln
+  ];
+}
+
 // 🔥 CHECK: Gibt es überhaupt passende Vokabeln?
-const validCount = vokabeln.filter(v =>
+const validCount = basisListe.filter(v =>
   v[frageLang] && v[frageLang].length &&
   v[antwortLang] && v[antwortLang].length
 ).length;
 
 if(validCount === 0){
-  alert("❌ Diese Sprachkombination funktioniert mit deinen Vokabeln nicht!");
+  alert("❌ Diese Sprachkombination funktioniert mit dieser Kategorie nicht!");
   return;
 }
-aktuelleListe = vokabeln.filter(v =>
+
+// 🔥 Liste erstellen
+aktuelleListe = basisListe.filter(v =>
   v &&
   v[frageLang] &&
   v[frageLang].length > 0 &&
   v[antwortLang] &&
   v[antwortLang].length > 0
 );
+
 if(aktuelleListe.length === 0){
   alert("❌ Keine gültigen Vokabeln für diese Sprachkombination!");
   return;
