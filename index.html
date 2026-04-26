@@ -2981,6 +2981,7 @@ let endAnswersSolved = 0;
 let endAnswersTotal = 0;
 let wiederholModus = false;
 let aktuelleListe = [];
+let statsFilter = "all";
 
 
 let combo = 0;
@@ -5372,6 +5373,13 @@ antwortLang = lang[1];
 
 let html = `
   <h2>📊 Deine Vokabel-Statistik</h2>
+<div style="margin-bottom:15px;">
+  <button onclick="setStatsFilter('all')">🌍 Alle</button>
+  <button onclick="setStatsFilter('verbs')">🔤 Verben</button>
+  <button onclick="setStatsFilter('adjectives')">🎨 Adjektive</button>
+  <button onclick="setStatsFilter('nouns')">📦 Nomen</button>
+  <button onclick="setStatsFilter('weak')">🔥 Schwach</button>
+</div>
 
   <div style="margin-bottom:15px;">
     <button class="popupBtn" onclick="startWeakTraining()">
@@ -5387,7 +5395,11 @@ let html = `
   }
 
 // 👉 aktuelle Vokabeln als Set (schnell)
-const standardListe = level2.map(v => ({
+let alleVokabeln = [
+  ...vokabeln,
+  ...adjVokabeln,
+  ...nounVokabeln
+];
   es: v[0].split("/"),
   de: v[1].split("/"),
   en: v[2].split("/"),
@@ -5402,13 +5414,46 @@ const basisListe = standardListe.filter(v =>
   v[antwortLang].length > 0
 );
 
-let entries = basisListe.map(v => {
+let gefiltert = alleVokabeln;
+
+// 👉 Kategorie-Filter
+if(statsFilter === "verbs"){
+  gefiltert = vokabeln;
+}
+if(statsFilter === "adjectives"){
+  gefiltert = adjVokabeln;
+}
+if(statsFilter === "nouns"){
+  gefiltert = nounVokabeln;
+}
+
+// 👉 Schwache Begriffe
+if(statsFilter === "weak"){
+  gefiltert = alleVokabeln.filter(v => {
+
+    const key = getVocabKey(v);
+    const stats = vocabStats[key];
+
+    if(!stats) return true;
+
+    const total = stats.correct + stats.wrong;
+    if(total === 0) return true;
+
+    const quote = (stats.correct / total) * 100;
+
+    return quote <= 50;
+  });
+}
+
+// 👉 daraus entries bauen
+let entries = gefiltert.map(v => {
 
   const key = getVocabKey(v);
   const stats = vocabStats[key] || { correct: 0, wrong: 0 };
 
   return [key, stats];
 });
+
 
 entries.sort((a, b) => {
 
@@ -5492,6 +5537,14 @@ autoResizeStatsWords(); // 🔥 HIER EINFÜGEN
   // 🔥 NEU: Button-Text ändern
   btn.innerText = "❌ Statistik ausblenden";
 }
+
+function setStatsFilter(filter){
+  statsFilter = filter;
+  showAllStats();
+}
+
+
+
 function showFloatingScore(points){
 
   const scoreEl = document.getElementById("scoreInline");
