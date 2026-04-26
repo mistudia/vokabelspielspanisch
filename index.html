@@ -2101,8 +2101,6 @@ button {
 
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
 
 </head>
 <body class="day">
@@ -3338,13 +3336,7 @@ beantwortet++;
   if(aktuelleVokabel && !falschDetails.some(f => 
     f.frage === aktuelleVokabel[frageLang].join(" / ")
   )){
-falschDetails.push({
-  frage: aktuelleVokabel[frageLang].join(" / "),
-  richtig: aktuelleVokabel[antwortLang].join(" / "),
-  pinyin: (frageLang === "zh") 
-    ? (aktuelleVokabel.pinyin || []).join(" / ")
-    : ""
-});
+addFalschDetail(aktuelleVokabel);
   }
 
 
@@ -4121,15 +4113,7 @@ updateComboAnzeige();
 
 // 👉 NEU: nur einmal speichern
 if(!falschDetails.some(f => f.frage === aktuelleVokabel[frageLang].join(" / "))){
-falschDetails.push({
-  frage: aktuelleVokabel[frageLang].join(" / "),
-  richtig: Array.isArray(richtig) 
-    ? richtig.join(" / ") 
-    : richtig,
-  pinyin: (frageLang === "zh") 
-    ? (aktuelleVokabel.pinyin || []).join(" / ")
-    : ""
-});
+addFalschDetail(aktuelleVokabel);
 }
 updateLebenAnzeige(); 
   const popup=document.getElementById("timeOverPopup");
@@ -4157,6 +4141,28 @@ spielBeenden("leben");
   nächsteFrage();
 }
   },1000);
+}
+
+function addFalschDetail(vokabel){
+
+  if(!vokabel || !vokabel[frageLang] || !vokabel[antwortLang]) return;
+
+  const frage = vokabel[frageLang];
+  const richtig = vokabel[antwortLang];
+
+  const exists = falschDetails.some(f =>
+    JSON.stringify(f.frage) === JSON.stringify(frage)
+  );
+
+  if(!exists){
+    falschDetails.push({
+      frage: frage,
+      richtig: richtig,
+      pinyin: (frageLang === "zh")
+        ? (vokabel.pinyin || [])
+        : []
+    });
+  }
 }
 
 
@@ -4282,20 +4288,34 @@ function saveDaily(){
 
 function updateDailyProgress(){
 
+  if(!dailyDone) dailyDone = 0;
+
   dailyDone++;
 
-  // 👉 NEU: sofort Streak erhöhen
-  if(dailyDone === dailyGoal){
-    streak++;
+  const goal = 20;
 
-    document.getElementById("feedback").innerText =
-      "🔥 Streak +1! (" + streak + ")";
+  // 👉 speichern
+  saveDaily();
+
+  // 👉 UI
+  const el = document.getElementById("dailyProgress");
+  if(el){
+    el.innerText = `📅 ${dailyDone} / ${goal}`;
   }
 
-  saveDaily();
-  updateDailyUI();
-}
+  // 🎯 Ziel erreicht
+  if(dailyDone === goal){
 
+    streak++;
+
+    saveDaily();
+
+    const feedback = document.getElementById("feedback");
+    if(feedback){
+      feedback.innerText = `🔥 Tagesziel erreicht! Streak: ${streak}`;
+    }
+  }
+}
 function updateDailyUI(){}
 
 function updatePinyinVisibility(){
@@ -4560,7 +4580,6 @@ if(
 }
 // 🔥 wenn keine Fehler → Retry direkt erlauben
 if(falschDetails.length === 0){
-  document.getElementById("retryBtn").disabled = false;
 }
 
   if(falschDetails.length === 0){
@@ -4579,16 +4598,21 @@ html += `
   ${f.frage}
 </span><br>
 
-${f.pinyin 
-  ? `<div style="font-size:16px; opacity:0.7;">${f.pinyin}</div>` 
+${f.pinyin && f.pinyin.length
+  ? `<div style="font-size:16px; opacity:0.7;">
+       ${Array.isArray(f.pinyin) ? f.pinyin.join(" / ") : f.pinyin}
+     </div>` 
   : ""}
+
 <input 
   id="endInput_${i}" 
-  data-answers='${JSON.stringify(f.richtig.split(" / "))}'
+  data-answers='${JSON.stringify(
+    Array.isArray(f.richtig) ? f.richtig : [f.richtig]
+  )}'
   placeholder="Antwort eingeben..."
   style="margin-top:5px; padding:6px; border-radius:8px; border:1px solid #ccc;"
-  onkeydown="if(event.key === 'Enter'){ 
-    const answers = JSON.parse(this.dataset.answers);
+  onkeydown="if(event && event.key === 'Enter'){ 
+    const answers = JSON.parse(this.dataset.answers || '[]');
     checkEndAnswer(this, answers, ${i});
     this.blur();
   }"
@@ -4620,14 +4644,16 @@ html += `<br><br>`;
 html += `
   <div class="popupBtnRow">
     <button class="popupBtn" onclick="spielZurücksetzen()">🏠 Startseite</button>
-<button 
-  id="retryBtn"
-  class="popupBtn replayBtn"
-  onclick="restartGame()"
-  disabled
->
-  🔄 noch mal
-</button>
+
+    <button 
+      id="retryBtn"
+      class="popupBtn replayBtn"
+      onclick="restartGame()"
+      ${falschDetails.length === 0 ? "" : "disabled"}
+    >
+      🔄 noch mal
+    </button>
+  </div>
 `;
 
 popup.className = "";
@@ -5257,12 +5283,11 @@ function checkEndAnswer(input, korrekt, index){
 
     if(endAnswersSolved >= endAnswersTotal){
 
-      const btn = document.getElementById("retryBtn");
-
-      if(btn){
-        btn.disabled = false;
-        btn.innerText = "🔄 noch mal";
-      }
+const btn = document.getElementById("retryBtn");
+if(btn){
+  btn.disabled = false;
+  btn.innerText = "🔄 noch mal";
+}
 
       if(!endHadMistake){
 
