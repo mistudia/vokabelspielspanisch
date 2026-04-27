@@ -2993,6 +2993,7 @@ let endAnswersTotal = 0;
 let wiederholModus = false;
 let aktuelleListe = [];
 let statsFilter = "all";
+let statsLanguage = null; // 🔥 neu für Statistik-Dropdown
 
 
 let combo = 0;
@@ -3004,10 +3005,11 @@ state.timeFreeze = false;
 // 📊 STATISTIK
 let vocabStats = {};
 
-function getVocabKey(v){
-  if(!v || !v.es || !v.de) return null;
+function getVocabKey(v, frageLang, antwortLang){
 
-  return `${v.es[0] || ""}→${v.de[0] || ""}`;
+  if(!v || !v[frageLang] || !v[antwortLang]) return null;
+
+  return `${v[frageLang][0] || ""}→${v[antwortLang][0] || ""}`;
 }
 
 function saveStats(){
@@ -3957,7 +3959,7 @@ if(achievements.sword_fire.unlocked){
 }
 
 // 📊 Statistik: richtig
-const key = getVocabKey(aktuelleVokabel);
+const key = getVocabKey(aktuelleVokabel, frageLang, antwortLang);
 
 if(!vocabStats[key]){
   vocabStats[key] = { correct: 0, wrong: 0 };
@@ -4070,7 +4072,7 @@ if(state.shieldActive){
   return;
 }
 // 📊 Statistik: falsch
-const key = getVocabKey(aktuelleVokabel);
+const key = getVocabKey(aktuelleVokabel, frageLang, antwortLang);
 
 if(!vocabStats[key]){
   vocabStats[key] = { correct: 0, wrong: 0 };
@@ -5408,7 +5410,8 @@ function showAllStats(){
     return;
   }
 
-  const lang = document.getElementById("languageSelector").value.split("-");
+const langValue = statsLanguage || document.getElementById("languageSelector").value;
+const lang = langValue.split("-");
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
@@ -5450,7 +5453,7 @@ function showAllStats(){
   // 🔹 3. Stats zusammenbauen
   let entries = filtered.map(v => {
 
-    const key = getVocabKey(v);
+const key = getVocabKey(v, frageLang, antwortLang);
     if(!key) return null;
 
     const stats = vocabStats[key] || { correct: 0, wrong: 0 };
@@ -5480,20 +5483,48 @@ function showAllStats(){
   });
 
   // 🔹 5. HTML bauen
-  let html = `
-    <h2>📊 Deine Vokabel-Statistik</h2>
+ let html = `
+  <h2>📊 Deine Vokabel-Statistik</h2>
 
-    <div style="margin-bottom:15px;">
-      <button onclick="setStatsFilter('all')">🌍 Alle</button>
-      <button onclick="setStatsFilter('verbs')">🔤 Verben</button>
-      <button onclick="setStatsFilter('adjectives')">🎨 Adjektive</button>
-      <button onclick="setStatsFilter('nouns')">📦 Nomen</button>
-      <button onclick="setStatsFilter('weak')">🔥 Schwach</button>
-    </div>
+  <div style="margin-bottom:15px;">
+    <label>🌍 Sprachrichtung:</label>
 
-    <div id="statsGrid">
-  `;
+    <select id="statsLangSelector" onchange="changeStatsLanguage()">
+      <option value="es-de">🇪🇸 → 🇩🇪</option>
+      <option value="de-es">🇩🇪 → 🇪🇸</option>
+      <option value="en-de">🇬🇧 → 🇩🇪</option>
+      <option value="de-en">🇩🇪 → 🇬🇧</option>
+      <option value="fr-de">🇫🇷 → 🇩🇪</option>
+      <option value="de-fr">🇩🇪 → 🇫🇷</option>
+      <option value="zh-de">🇨🇳 → 🇩🇪</option>
+      <option value="de-zh">🇩🇪 → 🇨🇳</option>
+    </select>
+  </div>
 
+  <div style="margin-bottom:15px;">
+    <button onclick="setStatsFilter('all')">🌍 Alle</button>
+    <button onclick="setStatsFilter('verbs')">🔤 Verben</button>
+    <button onclick="setStatsFilter('adjectives')">🎨 Adjektive</button>
+    <button onclick="setStatsFilter('nouns')">📦 Nomen</button>
+    <button onclick="setStatsFilter('weak')">🔥 Schwach</button>
+  </div>
+<div style="margin-bottom:15px;">
+  <button onclick="startWeakTraining()" style="
+    background:#f44336;
+    color:white;
+    font-weight:bold;
+    padding:8px 12px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+  ">
+    🚀 Schwache Vokabeln üben
+  </button>
+</div>
+
+
+  <div id="statsGrid">
+`;
   if(entries.length === 0){
     html += "<p>Keine Daten vorhanden</p>";
   }
@@ -5550,6 +5581,11 @@ function showAllStats(){
   btn.innerText = "❌ Statistik ausblenden";
 
   autoResizeStatsWords();
+const selector = document.getElementById("statsLangSelector");
+
+if(selector){
+  selector.value = statsLanguage || document.getElementById("languageSelector").value;
+}
 }
 
 
@@ -5558,7 +5594,13 @@ function setStatsFilter(filter){
   showAllStats();
 }
 
+function changeStatsLanguage(){
 
+  const selector = document.getElementById("statsLangSelector");
+  statsLanguage = selector.value;
+
+  showAllStats(); // 🔥 neu laden
+}
 
 function showFloatingScore(points){
 
