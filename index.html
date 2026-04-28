@@ -3446,7 +3446,7 @@ spielBeenden("time");
 
 async function addHighscore(name, punkte){
 
-if(isSavingScore || scoreSaved){
+if(isSavingScore){
   console.log("🚫 Doppeltes Speichern verhindert");
   return;
 }
@@ -4575,9 +4575,10 @@ function spielBeenden(reason){
 
 if(!wiederholModus && !scoreSaved){
 
-  scoreSaved = true;   // 🔥 verhindert doppelt
+  addHighscore(playerName, state.punkte); // ✅ ZUERST
 
-  addHighscore(playerName, state.punkte);
+  scoreSaved = true;                      // ✅ DANACH
+
   updateAllHighscores();
 }
 
