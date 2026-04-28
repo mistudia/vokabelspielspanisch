@@ -2334,13 +2334,12 @@ leben"></textarea>
     <p class="subtitle">Lerne schneller & erreiche Highscores 🚀</p>
 
     <div class="premium-features">
-  <div>📚 Eigene Vokabeln & Sätze üben</div> <!-- 👈 NEU -->
+  <div>📚 Eigene Vokabeln & Sätze eingeben</div> <!-- 👈 NEU -->
+  <div>📥 Excel-Tabellen üben</div> <!-- 👈 NEU -->
 
-      <div>🧠 Lernmodus (Spaced Repetition)</div>
-      <div>📊 Erweiterte Statistiken</div>
-      <div>🌍 Alle Sprachen freischalten</div>
-      <div>⏳ Unbegrenzte Spielzeit</div>
-      <div>🎮 Stärkere Items & Boni</div>
+      <div>💡 Lernmodus (Spaced Repetition)</div>
+      <div> ⌨️ Modus Antworten selbst eintippen</div>
+   <div>📊 Erweiterte Statistiken</div>
     </div>
 
     <div class="price">⭐ Nur 2,99€ einmalig</div>
@@ -2502,7 +2501,11 @@ loadAchievements();
 
 
 async function loadHighscoresOnline(){
-const group = document.getElementById("groupInput")?.value || "global";
+let group = document.getElementById("groupInput")?.value;
+
+if(!group || group.trim() === ""){
+  group = "global";
+}
 aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
 spielModus = document.getElementById("modeSelector").value;
 aktuelleSprache = document.getElementById("languageSelector").value;
@@ -2539,32 +2542,45 @@ const url = SUPABASE_URL +
 
 
 async function addHighscoreOnline(name, punkte, timestamp){
+console.log("💾 Versuch zu speichern:", {
+  user: currentUser,
+  name: getCurrentUsername(),
+  score: punkte
+});
 
-  try {
-    await fetch(SUPABASE_URL + "/rest/v1/highscores", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "Prefer": "return=minimal"
-      },
+try {
 
-body: JSON.stringify({
-  username: getCurrentUsername(),
-  score: punkte,
-  time: aktuelleZeit,
-  mode: spielModus,
-  language: aktuelleSprache,
-  group_id: document.getElementById("groupInput")?.value || "global", // 👈 HIER
-  created_at: timestamp
-})
-    });
+  const res = await fetch(SUPABASE_URL + "/rest/v1/highscores", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify({
+      username: getCurrentUsername(),
+      score: punkte,
+      time: aktuelleZeit,
+      mode: spielModus,
+      language: aktuelleSprache,
+      group_id: document.getElementById("groupInput")?.value || "global",
+      created_at: timestamp
+    })
+  });
 
-  } catch(err){
-    console.error("❌ Fehler beim Speichern:", err);
+  // 🔥 DAS IST DER WICHTIGSTE TEIL
+  if(!res.ok){
+    const text = await res.text();
+    console.error("❌ Supabase INSERT Fehler:", text);
+  } else {
+    console.log("✅ Highscore gespeichert!");
   }
+
+} catch(err){
+  console.error("❌ Fehler beim Speichern:", err);
 }
+
 
 function playSound(id){
   const s = document.getElementById(id);
@@ -4922,6 +4938,15 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
+async function startGame(){
+
+  await checkUser(); // 🔥 WICHTIG: User sicher laden
+
+  if(!currentUser){
+    alert("Bitte zuerst einloggen!");
+    return;
+  }
+
 scoreSaved = false;
 gameEnded = false;
 isSavingScore = false;
