@@ -1143,11 +1143,28 @@ max-width: none;
 .correct-answer { color: #00ff00; font-weight:bold; }
 
 .deutsches-wort {
-  color: orange;
-  font-size: 44px;      /* 👉 größer */
-  font-weight: bold;
- width: 100%;
-  margin-bottom: 20px;  /* 👉 mehr Abstand nach unten */
+  font-size: 42px;          /* deutlich größer */
+  font-weight: 900;         /* extra fett */
+  
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+
+  padding: 16px 24px;
+  border-radius: 16px;
+
+  display: inline-block;
+  margin-top: 20px;
+
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+  letter-spacing: 1px;
+
+  animation: popAnswer 0.3s ease;
+}
+
+@keyframes popAnswer {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 #fortschrittText {
@@ -2093,6 +2110,44 @@ button {
   touch-action: manipulation;
 }
 
+.level-inline {
+  font-size: 18px;        /* 🔥 kleiner */
+  opacity: 0.8;
+  margin-right: 10px;
+}
+
+/* 👉 Wort + Stern in eine Reihe */
+.wort-box > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+#timerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+#timerText {
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 40px;
+}
+
+#timerBarContainer {
+  width: 300px;   /* 👈 wichtig */
+  height: 20px;
+  background: #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+
+
+
 
 
 
@@ -2277,8 +2332,12 @@ leben"></textarea>
     <div id="wort"></div>
 
 
-<div id="timerBarContainer" style="display:none;">
-  <div id="timerBar"></div>
+<div id="timerWrapper" style="display:none;">
+  <div id="timerBarContainer">
+    <div id="timerBar"></div>
+  </div>
+
+  <div id="timerText">10s</div>
 </div>
 
 <div id="themeToggle">
@@ -2501,11 +2560,7 @@ loadAchievements();
 
 
 async function loadHighscoresOnline(){
-let group = document.getElementById("groupInput")?.value;
-
-if(!group || group.trim() === ""){
-  group = "global";
-}
+const group = document.getElementById("groupInput")?.value || "global";
 aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
 spielModus = document.getElementById("modeSelector").value;
 aktuelleSprache = document.getElementById("languageSelector").value;
@@ -2542,45 +2597,32 @@ const url = SUPABASE_URL +
 
 
 async function addHighscoreOnline(name, punkte, timestamp){
-console.log("💾 Versuch zu speichern:", {
-  user: currentUser,
-  name: getCurrentUsername(),
-  score: punkte
-});
 
-try {
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/highscores", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Prefer": "return=minimal"
+      },
 
-  const res = await fetch(SUPABASE_URL + "/rest/v1/highscores", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "Prefer": "return=minimal"
-    },
-    body: JSON.stringify({
-      username: getCurrentUsername(),
-      score: punkte,
-      time: aktuelleZeit,
-      mode: spielModus,
-      language: aktuelleSprache,
-      group_id: document.getElementById("groupInput")?.value || "global",
-      created_at: timestamp
-    })
-  });
+body: JSON.stringify({
+  username: getCurrentUsername(),
+  score: punkte,
+  time: aktuelleZeit,
+  mode: spielModus,
+  language: aktuelleSprache,
+  group_id: document.getElementById("groupInput")?.value || "global", // 👈 HIER
+  created_at: timestamp
+})
+    });
 
-  // 🔥 DAS IST DER WICHTIGSTE TEIL
-  if(!res.ok){
-    const text = await res.text();
-    console.error("❌ Supabase INSERT Fehler:", text);
-  } else {
-    console.log("✅ Highscore gespeichert!");
+  } catch(err){
+    console.error("❌ Fehler beim Speichern:", err);
   }
-
-} catch(err){
-  console.error("❌ Fehler beim Speichern:", err);
 }
-
 
 function playSound(id){
   const s = document.getElementById(id);
@@ -3238,15 +3280,31 @@ function showTop10Popup(name,punkte,rang){
 
 
 
-// --- Timer ---
 function updateTimerBar(){
 
-  let maxZeit = (spielModus === "typing") ? 20 : 10;
+  let maxZeit = aktuelleMaxZeit || 10;
 
-const bar = document.getElementById("timerBar");
-if(!bar) return;
+  const bar = document.getElementById("timerBar");
+  if(!bar) return;
 
-bar.style.width = (zeit / maxZeit * 100) + "%";}
+  bar.style.width = (zeit / maxZeit * 100) + "%";
+
+  // 👉 Sekunden anzeigen
+  const txt = document.getElementById("timerText");
+  if(txt){
+    txt.innerText = Math.ceil(zeit) + "s";
+
+    // 🔥 Farbe bei wenig Zeit
+    if(zeit < 3){
+      txt.style.color = "red";
+    } else if(zeit < 6){
+      txt.style.color = "orange";
+    } else {
+      txt.style.color = "inherit";
+    }
+  }
+}
+
 
 function speak(text){
   speechSynthesis.cancel();
@@ -3446,7 +3504,7 @@ spielBeenden("time");
 
 async function addHighscore(name, punkte){
 
-if(isSavingScore){
+if(isSavingScore || scoreSaved){
   console.log("🚫 Doppeltes Speichern verhindert");
   return;
 }
@@ -3604,8 +3662,7 @@ if(frageLang === "zh" && showPinyin){
   `;
 }
 
-// 🎯 HSK anzeigen
-if(w.hsk){
+if(frageLang === "zh" && w.hsk){
   extraInfo += `
     <div class="hsk">
       HSK ${w.hsk}
@@ -3617,9 +3674,11 @@ if(w.hsk){
 let html = `
 <div class="wort-box">
 
-  <div style="display:flex; align-items:center; justify-content:center; gap:15px; flex-wrap:wrap;">
-    
-    <div>${frageText}</div>
+<div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+
+${spielModus === "learn" && !antwortAngezeigt ? `<div class="level-inline">${level}</div>` : ""}
+
+  <div>${frageText}</div>
 
     ${frageLang === "zh" ? `
       <label style="font-size:16px; cursor:pointer;">
@@ -3630,7 +3689,6 @@ let html = `
 
   </div>
 
-  ${spielModus === "learn" ? `<br><small>${level}</small>` : ""}
   ${extraInfo}
   </div>  
 
@@ -3782,7 +3840,23 @@ buttons.forEach(b => {
   });
 }
 
-    zeit = (spielModus === "typing") ? 20 : 10;
+const text = aktuelleVokabel[frageLang].join(" ");
+
+// Länge messen
+const length = text.length;
+
+// Dynamische Zeit berechnen
+let base = (spielModus === "typing") ? 12 : 8;
+
+// + Zeit je nach Länge
+let extra = Math.floor(length / 10);
+
+// Limit setzen (wichtig!)
+zeit = Math.min(base + extra, 30);
+aktuelleMaxZeit = zeit;
+
+document.getElementById("feedback").innerText =
+  "⏱ " + Math.round(zeit) + " Sekunden";
     startTimer();
 
   } catch(err){
@@ -3809,13 +3883,13 @@ function updateCurrentQuestionUI(){
     `;
   }
 
-  if(w.hsk){
-    extraInfo += `
-      <div class="hsk">
-        HSK ${w.hsk}
-      </div>
-    `;
-  }
+if(frageLang === "zh" && w.hsk){
+  extraInfo += `
+    <div class="hsk">
+      HSK ${w.hsk}
+    </div>
+  `;
+}
 
   let html = `
     <div class="wort-box">
@@ -4475,9 +4549,9 @@ document.getElementById("hintBtn").onclick = function(){
 const frageText = w[frageLang].join(" / ");
   const level = "⭐".repeat(w.box || 1);
 
-let html = `<div class="wort-box">${frageText}${
-  spielModus === "learn" ? `<br><small>${level}</small>` : ""
-}`;
+let html = `<div class="wort-box">${frageText} 
+
+`;
   html += `<div class="deutsches-wort">${w[antwortLang].join(" / ")}</div>`;
   html += `</div>`;
 
@@ -4575,10 +4649,9 @@ function spielBeenden(reason){
 
 if(!wiederholModus && !scoreSaved){
 
-  addHighscore(playerName, state.punkte); // ✅ ZUERST
+  scoreSaved = true;   // 🔥 verhindert doppelt
 
-  scoreSaved = true;                      // ✅ DANACH
-
+  addHighscore(playerName, state.punkte);
   updateAllHighscores();
 }
 
@@ -4736,9 +4809,9 @@ document.getElementById("wort").onclick = function(){
 const frageText = w[frageLang].join(" / ");
     const level = "⭐".repeat(w.box || 1);
 
-let html = `<div class="wort-box">${frageText}${
-  spielModus === "learn" ? `<br><small>${level}</small>` : ""
-}`;
+let html = `<div class="wort-box">${frageText}
+
+`;
     html += `<div class="deutsches-wort">${w[antwortLang].join(" / ")}</div>`;
     html += `</div>`;
 
@@ -4939,15 +5012,6 @@ customList.push({
   reader.readAsArrayBuffer(file);
 }
 function startGame(){
-async function startGame(){
-
-  await checkUser(); // 🔥 WICHTIG: User sicher laden
-
-  if(!currentUser){
-    alert("Bitte zuerst einloggen!");
-    return;
-  }
-
 scoreSaved = false;
 gameEnded = false;
 isSavingScore = false;
@@ -5052,8 +5116,7 @@ updateScoreUI();
 document.getElementById("inventory").style.display = "block";
 document.getElementById("itemBook").style.display = "block";   // ✅ bleibt sichtbar
 
-  document.getElementById("timerBarContainer").style.display = "block";
-  document.getElementById("progressContainer").style.display = "block";
+document.getElementById("timerWrapper").style.display = "flex";  document.getElementById("progressContainer").style.display = "block";
   document.getElementById("highscoresContainer").style.display = "block";
 
   shuffleArray(aktuelleListe);
@@ -5278,12 +5341,17 @@ function checkEndAnswer(input, korrekt, index){
 
   if(!el.attempts) el.attempts = 0;
 
-  const value = input.value.trim().toLowerCase();
+  const value = input.value.trim(); // 🔥 ORIGINAL behalten
+  const lowerValue = value.toLowerCase();
+
   const korrektListe = korrekt.map(w => w.toLowerCase());
 
-  if(korrektListe.includes(value)){
+  if(korrektListe.includes(lowerValue)){
 
-    feedback.innerHTML = `<span style="color:#00e600;">✔ Richtig!</span>`;
+    feedback.innerHTML = `
+      <span style="color:#00e600;">✔ Richtig!</span>
+    `;
+
     playSound("richtig");
 
   } else {
@@ -5291,9 +5359,10 @@ function checkEndAnswer(input, korrekt, index){
     endHadMistake = true;
 
     feedback.innerHTML = `
-      <span style="color:#ff4444;">
-        ✖ Falsch! ➜ ${korrekt.join(" / ")}
-      </span>
+      <div style="color:#ff4444;">
+        ✖ Deine Antwort: <b>${value || "—"}</b><br>
+        ✔ Richtig: <b>${korrekt.join(" / ")}</b>
+      </div>
     `;
 
     playSound("falsch");
@@ -5311,7 +5380,7 @@ function checkEndAnswer(input, korrekt, index){
     input.focus();
   }, 0);
 
-  input.value = "";
+  input.value = ""; // 🔥 erst NACH Anzeige leeren
 
   if(input.disabled){
 
@@ -5326,15 +5395,15 @@ function checkEndAnswer(input, korrekt, index){
 
     if(endAnswersSolved >= endAnswersTotal){
 
-const btn = document.getElementById("retryBtn");
-if(btn){
-  btn.disabled = false;
-  btn.innerText = "🔄 noch mal";
-}
+      const btn = document.getElementById("retryBtn");
+      if(btn){
+        btn.disabled = false;
+        btn.innerText = "🔄 noch mal";
+      }
 
       if(!endHadMistake){
 
-unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
+        unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
 
         setTimeout(() => {
           renderInventory();
@@ -5792,7 +5861,8 @@ async function buyPremium(){
     return;
   }
 
-  alert("⚠️ Premium kann nur über Zahlung freigeschaltet werden.");
+  // 👉 Stripe Checkout öffnen
+  window.open("https://buy.stripe.com/eVqbJ2euS1JSgyB7hheME01", "_blank");
 }
 
 async function signUp(){
