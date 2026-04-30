@@ -4690,9 +4690,9 @@ endAnswersTotal = falschDetails.length;
 endHadMistake = false; // 🔥 reset für neue Runde
 if(
   falschDetails.length === 0 &&
-  !achievements.crown.unlocked
+  !achievements.clock.unlocked
 ){
-  unlockAndGive("crown", "👑 Königskrone freigeschaltet!");
+unlockAndGive("clock", "⏳ PERFEKTES SPIEL!");
 }
 // 🔥 wenn keine Fehler → Retry direkt erlauben
 if(falschDetails.length === 0){
@@ -4898,10 +4898,9 @@ vokabeln = level2.map(v => ({
 };
 function giveLoot(){
 
-if(state.punkte >= 1000){
-  unlockAndGive("clock", "⏳ Zeit-Booster freigeschaltet!");
-}
-
+  if(state.punkte >= 1000 && !achievements.crown.unlocked){
+unlockAndGive("crown", "👑 1000 PUNKTE!");
+  }
 }
 
 
@@ -5428,18 +5427,13 @@ function checkEndAnswer(input, korrekt, index){
 }
 
 async function initApp(){
-
-  document.body.addEventListener("click", () => {
-    const u = new SpeechSynthesisUtterance(" ");
-    speechSynthesis.speak(u);
-  }, { once: true });
-
   await checkUser();           // wichtig!
 
   await hidePremiumModes();
   await updateTeacherModeUI();   // 🔥 und HIER
 
 const savedName = localStorage.getItem("playerName");
+  hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
 
 if(savedName){
   document.getElementById("playerName").value = savedName;
@@ -5462,6 +5456,8 @@ if(savedName){
   initVoices();
 
   updateAllHighscores(); // 🔥 HIER
+ await updateTeacherModeUI(); // ✅ GENAU HIER
+
 }
 
 window.addEventListener("load", initApp);
