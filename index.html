@@ -3579,22 +3579,24 @@ async function addHighscore(name, punkte){
     return;
   }
 
+  if(isCustomMode){
+    console.log("🚫 Custom Mode → kein Highscore");
+    return;
+  }
+
+  if(!currentUser){
+    console.log("🚫 Kein Login → kein Highscore");
+    return;
+  }
+
   isSavingScore = true;
-  scoreSaved = true; // ✅ HIER ist der richtige Ort
 
   try {
 
-    if(isCustomMode){
-      console.log("🚫 Custom Mode → kein Highscore");
-      return;
-    }
-
     const timestamp = new Date().toISOString();
 
-    if(!currentUser){
-      console.log("🚫 Kein Login → kein Highscore");
-      return;
-    }
+    // ✅ ERST HIER!
+    scoreSaved = true;
 
     await addHighscoreOnline(name, state.punkte, timestamp);
 
@@ -3605,11 +3607,14 @@ async function addHighscore(name, punkte){
 
   } catch(err){
     console.error("❌ Fehler beim Speichern:", err);
+
+    // ❗ wichtig: zurücksetzen wenn Fehler
+    scoreSaved = false;
+
   } finally {
     isSavingScore = false;
   }
 }
-
 
 function spielZurücksetzen(){
 
@@ -5062,8 +5067,10 @@ customVokabeln = customList;
 
   reader.readAsArrayBuffer(file);
 }
+
 function startGame(){
 scoreSaved = false;
+isSavingScore = false;
 gameEnded = false;
 isSavingScore = false;
 document.getElementById("statsPanel").style.display = "none";
