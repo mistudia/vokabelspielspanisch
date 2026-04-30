@@ -5428,13 +5428,18 @@ function checkEndAnswer(input, korrekt, index){
 }
 
 async function initApp(){
+
+  document.body.addEventListener("click", () => {
+    const u = new SpeechSynthesisUtterance(" ");
+    speechSynthesis.speak(u);
+  }, { once: true });
+
   await checkUser();           // wichtig!
 
   await hidePremiumModes();
   await updateTeacherModeUI();   // 🔥 und HIER
 
 const savedName = localStorage.getItem("playerName");
-  hidePremiumModes(); // 🔥 GENAU HIER EINFÜGEN
 
 if(savedName){
   document.getElementById("playerName").value = savedName;
@@ -5457,8 +5462,6 @@ if(savedName){
   initVoices();
 
   updateAllHighscores(); // 🔥 HIER
- await updateTeacherModeUI(); // ✅ GENAU HIER
-
 }
 
 window.addEventListener("load", initApp);
