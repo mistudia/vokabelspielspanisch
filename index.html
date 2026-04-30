@@ -3574,12 +3574,13 @@ spielBeenden("time");
 
 async function addHighscore(name, punkte){
 
-if(isSavingScore || scoreSaved){
-  console.log("🚫 Doppeltes Speichern verhindert");
-  return;
-}
+  if(isSavingScore || scoreSaved){
+    console.log("🚫 Doppeltes Speichern verhindert");
+    return;
+  }
 
   isSavingScore = true;
+  scoreSaved = true; // ✅ HIER ist der richtige Ort
 
   try {
 
@@ -3590,21 +3591,17 @@ if(isSavingScore || scoreSaved){
 
     const timestamp = new Date().toISOString();
 
-if(!currentUser){
-  console.log("🚫 Kein Login → kein Highscore");
+    if(!currentUser){
+      console.log("🚫 Kein Login → kein Highscore");
+      return;
+    }
 
-  document.getElementById("feedback").innerText =
-    "🔒 Logge dich ein, um im Highscore zu erscheinen!";
+    await addHighscoreOnline(name, state.punkte, timestamp);
 
-  return;
-}
+    lastScore = state.punkte;
+    lastTimestamp = timestamp;
 
-await addHighscoreOnline(name, state.punkte, timestamp);
-
-lastScore = state.punkte;
-lastTimestamp = timestamp;
-
-await updateAllHighscores();
+    await updateAllHighscores();
 
   } catch(err){
     console.error("❌ Fehler beim Speichern:", err);
@@ -3612,6 +3609,7 @@ await updateAllHighscores();
     isSavingScore = false;
   }
 }
+
 
 function spielZurücksetzen(){
 
@@ -4720,10 +4718,7 @@ function spielBeenden(reason){
 
   const popup = document.getElementById("timeOverPopup");
 
-if(!wiederholModus && !scoreSaved){
-
-  scoreSaved = true;   // 🔥 verhindert doppelt
-
+if(!wiederholModus){
   addHighscore(playerName, state.punkte);
   updateAllHighscores();
 }
