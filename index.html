@@ -2251,6 +2251,17 @@ button {
   opacity: 1;
 }
 
+#progressElefant {
+  position: absolute;
+  top: -10px;
+  left: 0%;
+  width: 40px;
+
+  transform: translateX(-50%);
+  transition: left 0.3s ease;
+
+  pointer-events: none;
+}
 
 
 
@@ -2458,8 +2469,11 @@ leben"></textarea>
   <span>🌙</span>
 </div>
 
-<div id="progressContainer" style="display:none;">
+<div id="progressContainer" style="display:none; position:relative;">
   <div id="progressBar" class="level2"></div>
+
+  <!-- 🐘 HIER EINFÜGEN -->
+  <img src="elefant.png" id="progressElefant">
 </div>
 
 <div id="antworten"></div>
@@ -4167,6 +4181,10 @@ const current = Math.min(aktuelleFrage, total);
 
     const pr = (current / total) * 100;
     bar.style.width = pr + "%";
+const elephant = document.getElementById("progressElefant");
+if(elephant){
+  elephant.style.left = pr + "%";
+}
 
 if(wiederholModus){
   el.innerText = "🔥 " + current + " / " + total;  // 🔥 klarer Modus
