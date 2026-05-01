@@ -2616,22 +2616,19 @@ function loadAchievements(){
 loadAchievements();
 
 
-async function loadHighscoresOnline(){
-const group = document.getElementById("groupInput")?.value || "global";
-aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
-spielModus = document.getElementById("modeSelector").value;
-aktuelleSprache = document.getElementById("languageSelector").value;
+async function loadHighscoresOnline(zeit, modus, sprache){
 
-const url = SUPABASE_URL +
-`/rest/v1/highscores?select=*
-&time=eq.${aktuelleZeit}
-&mode=eq.${spielModus}
-&language=eq.${aktuelleSprache}
-&group_id=eq.${group}   // 👈 HIER
-&order=score.desc,time.asc
-&limit=10`;
+  const group = document.getElementById("groupInput")?.value || "global";
 
-  console.log("URL:", url);
+  const url = SUPABASE_URL + "/rest/v1/highscores?select=*"
+    + "&time=eq." + zeit
+    + "&mode=eq." + modus
+    + "&language=eq." + sprache
+    + "&group_id=eq." + group
+    + "&order=score.desc,created_at.asc"
+    + "&limit=10";
+
+  console.log("🌐 URL:", url);
 
   const res = await fetch(url, {
     headers: {
@@ -2645,11 +2642,12 @@ const url = SUPABASE_URL +
   console.log("🎯 Geladene Daten:", data);
 
   if(!data || data.length === 0){
-    console.log("⚠️ Keine Scores für diesen Modus/Zeit");
+    console.log("⚠️ Keine Scores für diesen Filter");
   }
 
   return data;
 }
+
 
 
 async function addHighscoreOnline(name, punkte, timestamp){
@@ -3220,7 +3218,11 @@ async function updateAllHighscores(){
   let hs = [];
 
   try {
-    hs = await loadHighscoresOnline();
+hs = await loadHighscoresOnline(
+  aktuelleZeit,
+  spielModus,
+  aktuelleSprache
+);
 // 🔥 LIVE SCORE EINFÜGEN
 // 🔥 LIVE SCORE EINFÜGEN
 if(!isCustomMode && playerName && !gameEnded){
