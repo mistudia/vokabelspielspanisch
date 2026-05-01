@@ -326,16 +326,18 @@ transition:all 0.5s;
   opacity: 0.85;
 }
 
-#timerBarContainer, #progressContainer { width:60%; height:20px; border-radius:10px; margin:10px auto; overflow:hidden; background:#ccc; transition:all 0.5s;}
-#timerBar, #progressBar { height:100%; width:100%; transition: width 0.1s linear;}
+#timerBarContainer, 
 
-#progressContainer {
-  width: 100%;
-  height: 20px;              /* 🔥 HIER Höhe ändern */
-  background-color: #ccc;    /* Hintergrund sichtbar machen */
-  border-radius: 20px;
+#progressContainer { 
+width:60%; 
+height:20px; 
+border-radius:20px; 
+margin:10px auto; 
   overflow: visible; /* statt hidden */
-}
+background:#ccc; 
+transition:all 0.5s;}
+
+#timerBar, #progressBar { height:100%; width:100%; transition: width 0.1s linear;}
 
 #progressBar {
   height: 100%;
@@ -2276,6 +2278,58 @@ button {
   pointer-events: none;
 }
 
+#progressSteps {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;        /* 🔥 NEU */
+  height: 100%;         /* 🔥 NEU */
+}
+
+.progress-segment {
+  height: 100%;
+  display: inline-block;
+  background: rgba(255,255,255,0.3);
+  transition: background 0.3s;
+
+  border-right: 2px solid rgba(255,255,255,0.8); /* 🔥 NEU */
+}
+
+.progress-segment:last-child {
+  border-right: none;
+}
+
+/* Farben */
+.progress-segment.correct {
+  background: #4caf50;
+}
+
+.progress-segment.wrong {
+  background: #f44336;
+}
+
+.progress-segment.timeout {
+  background: #ffeb3b;
+}
+
+
+.progress-step.correct {
+  background: #4caf50;
+}
+
+.progress-step.wrong {
+  background: #f44336;
+}
+
+.progress-step.timeout {
+  background: #ffeb3b;
+}
+
+
+
 
 
 
@@ -2485,7 +2539,8 @@ leben"></textarea>
 <div id="progressContainer" style="display:none; position:relative;">
   <div id="progressBar" class="level2"></div>
 
-  <!-- 🐘 HIER EINFÜGEN -->
+  <div id="progressSteps"></div> <!-- 🔥 HIER -->
+
   <img src="elefant.png" id="progressElefant">
 </div>
 
@@ -3247,6 +3302,7 @@ let statsLanguage = null; // 🔥 neu für Statistik-Dropdown
 
 
 let combo = 0;
+let progressStates = [];
 let lastRank = null;
 let achievedFirstPlace = false; // 🥇 NEU
 let answerLocked = false;
@@ -3651,6 +3707,8 @@ if(zeit <= 0){
 
 
 function zeitAbgelaufen(){
+progressStates[aktuelleFrage] = "timeout";
+updateProgressStepsUI();
   if(gameEnded) return; // 🔥 GANZ OBEN
 beantwortet++;
 
@@ -4197,24 +4255,66 @@ if(spielModus === "learn"){
 
     if(!bar || !el) return;
 
-    const total = aktuelleListe.length || 1;
-const current = Math.min(aktuelleFrage, total);
+const total = aktuelleListe.length || 1;
+const current = Math.min(aktuelleFrage + 1, total); // 🔥 wichtig
 
-    const pr = (current / total) * 100;
-    bar.style.width = pr + "%";
+const pr = Math.min((current / total) * 100, 100); // ✅ nur EINMAL
+
+bar.style.width = pr + "%";
+
 const elephant = document.getElementById("progressElefant");
+
 if(elephant){
-  elephant.style.left = pr + "%";
+  if(pr >= 100){
+    elephant.style.left = "100%";
+    elephant.style.transform = "translateX(-100%)";
+  } else {
+    elephant.style.left = pr + "%";
+    elephant.style.transform = "translateX(-50%)";
+  }
 }
 
 if(wiederholModus){
-  el.innerText = "🔥 " + current + " / " + total;  // 🔥 klarer Modus
+  el.innerText = "🔥 " + current + " / " + total;
 } else {
   el.innerText = "📚 " + current + " / " + total;
 }
 
   } catch(err){
     console.error("💥 Progress Fehler:", err);
+  }
+}
+
+function updateProgressStepsUI(){
+
+const steps = document.querySelectorAll(".progress-segment");
+
+  steps.forEach((step, i) => {
+
+    step.classList.remove("correct", "wrong", "timeout");
+
+    const state = progressStates[i];
+
+    if(state){
+      step.classList.add(state);
+    }
+
+  });
+}
+
+function renderProgressSteps(total){
+
+  const container = document.getElementById("progressSteps");
+  container.innerHTML = "";
+
+  for(let i = 0; i < total; i++){
+
+    const seg = document.createElement("div");
+    seg.className = "progress-segment";
+
+    seg.style.width = (100 / total) + "%";
+
+    container.appendChild(seg);
   }
 }
 
@@ -4261,6 +4361,8 @@ falschAntwort(aktuelleVokabel[antwortLang].join(" / "));
 }
 
 function richtigAntwort(){
+progressStates[aktuelleFrage] = "correct";
+updateProgressStepsUI();
 beantwortet++;
 if(spielModus === "learn"){
   aktuelleVokabel.box = Math.min(5, aktuelleVokabel.box + 1);
@@ -4405,6 +4507,8 @@ function getModeIcon(){
 
 
 function falschAntwort(richtig){
+progressStates[aktuelleFrage] = "wrong";
+updateProgressStepsUI();
 beantwortet++;
 if(state.shieldActive){
   state.shieldActive = false;
@@ -4816,6 +4920,7 @@ document.getElementById("hintBtn").onclick = function(){
 };
 
 function restartGame(){
+progressStates = [];
 achievedFirstPlace = false;
 lastRank = null;
 gameEnded = false;
@@ -5457,6 +5562,7 @@ beantwortet = 0;
   aktuelleFrage = 0;
   leben = 3;
   combo = 0;
+progressStates = []; // 🔥 HIER
   highscoreSchonVerarbeitet = false;
 
   document.getElementById("overlay").style.display = "none";
@@ -5481,6 +5587,7 @@ document.getElementById("timerWrapper").style.display = "flex";  document.getEle
 
   shuffleArray(aktuelleListe);
 overrideTrainingList = null; // 🔥 zurücksetzen
+renderProgressSteps(aktuelleListe.length);
 
   updateAllHighscores();
   startGesamtTimer();
