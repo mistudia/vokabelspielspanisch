@@ -2619,6 +2619,12 @@ loadAchievements();
 async function loadHighscoresOnline(zeit, modus, sprache){
 
   const group = document.getElementById("groupInput")?.value || "global";
+console.log("🧪 FILTER VALUES:", {
+  zeit,
+  modus,
+  sprache,
+  group
+});
 
   const url = SUPABASE_URL + "/rest/v1/highscores?select=*"
     + "&time=eq." + zeit
