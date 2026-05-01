@@ -2624,7 +2624,7 @@ async function loadHighscoresOnline(zeit, modus, sprache){
     + "&time=eq." + zeit
     + "&mode=eq." + modus
     + "&language=eq." + sprache
-    + "&group_id=eq." + group
++ "&group_id=is.null"
     + "&order=score.desc,created_at.asc"
     + "&limit=10";
 
