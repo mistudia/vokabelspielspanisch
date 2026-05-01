@@ -2624,7 +2624,7 @@ async function loadHighscoresOnline(zeit, modus, sprache){
     + "&time=eq." + zeit
     + "&mode=eq." + modus
     + "&language=eq." + sprache
-+ "&group_id=is.null"
++ "&group_id=eq.global"
     + "&order=score.desc,created_at.asc"
     + "&limit=10";
 
@@ -2677,12 +2677,12 @@ async function addHighscoreOnline(name, punkte, timestamp){
         "Prefer": "return=representation"
       },
       body: JSON.stringify({
-        name: getCurrentUsername() || playerName || "Spieler", // 🔥 sicher
+name: (getCurrentUsername() || playerName || "Spieler").trim(),
         score: punkte,
         time: aktuelleZeit,
         mode: spielModus,
         language: aktuelleSprache,
-        group_id: document.getElementById("groupInput")?.value || "global",
+group_id: "global",
         created_at: timestamp
       })
     });
@@ -3277,7 +3277,10 @@ let html = `
   }
 
 hs.forEach((e,i)=>{
-const isLive = e.created_at === "live";
+
+const displayName = e.name || e.username || "Spieler";
+
+  const isLive = e.created_at === "live";
 
   let klasse = "";
 
@@ -3285,37 +3288,33 @@ const isLive = e.created_at === "live";
   else if(i === 1) klasse = "silver";
   else if(i === 2) klasse = "bronze";
 
-const isNew =
-  e.username === playerName &&
-  e.score === lastScore &&
-  e.created_at === lastTimestamp;
+  const isNew =
+    displayName === playerName &&
+    e.score === lastScore &&
+    e.created_at === lastTimestamp;
 
-if(e.username === playerName){
-  klasse += " me";
-}
-// 🔥 Nur EIN grüner Eintrag
+  if(displayName === playerName){
+    klasse += " me";
+  }
 
-if(isLive){
-  // 👉 während Spiel läuft → nur Live markieren
-  klasse += " new-score";
-} 
-else if(e.username === playerName && e.score === lastScore){
-  // 👉 nach Spiel → letzter Score markieren
-  klasse += " new-score";
-}
-let medal = "";
-if(i === 0) medal = "🥇 ";
-else if(i === 1) medal = "🥈 ";
-else if(i === 2) medal = "🥉 ";
+  if(isLive){
+    klasse += " new-score";
+  } 
+  else if(displayName === playerName && e.score === lastScore){
+    klasse += " new-score";
+  }
 
-html += `
-  <div class="highscore-item ${klasse}">
-    ${medal}${i+1}. 
+  let medal = "";
+  if(i === 0) medal = "🥇 ";
+  else if(i === 1) medal = "🥈 ";
+  else if(i === 2) medal = "🥉 ";
 
-${e.username || "Spieler"}: ${e.score}
-  </div>
-`;
-
+  html += `
+    <div class="highscore-item ${klasse}">
+      ${medal}${i+1}. 
+      ${displayName}: ${e.score}
+    </div>
+  `;
 });
 
   document.getElementById("highscoreList2").innerHTML = html;
