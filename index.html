@@ -319,7 +319,13 @@ transition:all 0.5s;
 
 #antworten button:hover { transform:scale(1.05); }
 
-#feedback { font-size:24px; margin-top:15px; height:30px; transition:all 0.3s;}
+#feedback {
+  font-size:14px;
+  margin: 0;
+  height:18px;
+  opacity: 0.85;
+}
+
 #timerBarContainer, #progressContainer { width:60%; height:20px; border-radius:10px; margin:10px auto; overflow:hidden; background:#ccc; transition:all 0.5s;}
 #timerBar, #progressBar { height:100%; width:100%; transition: width 0.1s linear;}
 
@@ -2203,7 +2209,47 @@ button {
     0 5px 15px rgba(0,0,0,0.2);
 }
 
+.stats-filter-active {
+  background: linear-gradient(135deg, #4caf50, #2e7d32) !important;
+  color: white !important;
 
+  box-shadow: 0 0 15px rgba(76,175,80,0.8);
+  transform: scale(1.05);
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #333;
+  color: #fff;
+
+  padding: 10px 14px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  white-space: nowrap;
+
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+
+  transition: 0.3s;
+  z-index: 9999;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
 
 
 
@@ -2341,7 +2387,7 @@ leben"></textarea>
 <hr style="width:80%; margin:20px auto;">
 
 <button id="statsBtn" class="popupBtn">
-  📊 Statistik anzeigen 🔒
+  📊 Statistik anzeigen
 </button>
 
 <div id="statsPanel" style="display:none;"></div>
@@ -2372,8 +2418,11 @@ leben"></textarea>
   <div id="leben" class="box">❤️❤️❤️</div>
 
   <!-- 🔥 HIER rein -->
+  <div id="feedback"></div> <!-- 🔥 HIER NEU -->
 
 <div class="button-row">
+
+
   <button id="backBtn">🏠</button>
 
   <div class="box score-box" id="scoreInline">
@@ -2429,7 +2478,6 @@ leben"></textarea>
   <input id="textAntwort" placeholder="Antwort eingeben..." />
   <button id="checkBtn">OK</button>
 </div>
-    <div id="feedback"></div>
 
   <div id="highscoresContainer">
     <div id="highscoreList2" class="highscoreBox"></div>
@@ -2734,9 +2782,12 @@ popup.style.opacity = "0";
 popup.style.transition = "all 0.4s ease";
   popup.innerText = text;
   popup.style.position = "fixed";
-popup.style.top = "50%";
+const authBox = document.getElementById("authBox");
+const rect = authBox.getBoundingClientRect();
+
+popup.style.top = (rect.bottom + 10) + "px"; // 10px Abstand darunter
 popup.style.left = "50%";
-popup.style.transform = "translate(-50%, -50%)"; // 🔥 perfekt zentriert
+popup.style.transform = "translateX(-50%)";
 
   popup.style.padding = "20px";
   popup.style.borderRadius = "15px";
@@ -2758,12 +2809,12 @@ popup.style.boxShadow = "0 0 25px " + bg;
   document.body.appendChild(popup);
 setTimeout(()=>{
   popup.style.opacity = "1";
-  popup.style.transform = "translate(-50%, -50%) scale(1)";
+  popup.style.transform = "translateX(-50%) scale(1)";
 },10);
 
 setTimeout(()=>{
   popup.style.opacity = "0";
-  popup.style.transform = "translate(-50%, -40%) scale(0.8)";
+  popup.style.transform = "translateX(-50%) scale(0.8)";
 
   setTimeout(()=>{
     popup.remove();
@@ -2854,6 +2905,45 @@ document.getElementById("pauseBtn").onclick = function(){
     this.innerText = "⏸";
   }
 };
+
+function saveGameSettings(){
+
+  const settings = {
+    category: document.getElementById("categorySelector").value,
+    mode: document.getElementById("modeSelector").value,
+    language: document.getElementById("languageSelector").value,
+    time: document.getElementById("timeSelector").value
+  };
+
+  localStorage.setItem("gameSettings", JSON.stringify(settings));
+}
+
+function loadGameSettings(){
+
+  const data = localStorage.getItem("gameSettings");
+  if(!data) return;
+
+  const settings = JSON.parse(data);
+
+  if(settings.category){
+    document.getElementById("categorySelector").value = settings.category;
+  }
+
+  if(settings.mode){
+    document.getElementById("modeSelector").value = settings.mode;
+  }
+
+  if(settings.language){
+    document.getElementById("languageSelector").value = settings.language;
+  }
+
+  if(settings.time){
+    document.getElementById("timeSelector").value = settings.time;
+  }
+}
+
+
+
 
 // --- Shuffle ---
 function shuffleArray(array){ for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]];}}
@@ -4877,14 +4967,24 @@ html += `
   <div class="popupBtnRow">
     <button class="popupBtn" onclick="spielZurücksetzen()">🏠 Startseite</button>
 
-    <button 
-      id="retryBtn"
-      class="popupBtn replayBtn"
-      onclick="restartGame()"
-      ${falschDetails.length === 0 ? "" : "disabled"}
-    >
-      🔄 noch mal
-    </button>
+<div class="tooltip-wrapper">
+
+  <button 
+    id="retryBtn"
+    class="popupBtn replayBtn"
+    onclick="restartGame()"
+    ${falschDetails.length === 0 ? "" : "disabled"}
+  >
+    🔄 noch mal
+  </button>
+
+  <div id="retryTooltip" class="tooltip-text">
+    Korrigiere alle Fehler, um neu zu starten<br>
+    + 🛡️ Schutzschild als Bonus!
+  </div>
+
+</div>
+
   </div>
 `;
 
@@ -5121,6 +5221,7 @@ customVokabeln = customList;
 }
 
 function startGame(){
+saveGameSettings();   // 🔥 HIER
 scoreSaved = false;
 isSavingScore = false;
 gameEnded = false;
@@ -5532,6 +5633,17 @@ function checkEndAnswer(input, korrekt, index){
         btn.innerText = "🔄 noch mal";
       }
 
+const tooltip = document.getElementById("retryTooltip");
+
+if(tooltip){
+  if(!endHadMistake){
+    tooltip.innerHTML = "Perfekt! 🎉<br>Du bekommst 🛡️ Schutzschild!";
+  } else {
+    tooltip.innerHTML = "Du kannst jetzt neu starten 👍";
+  }
+}
+
+
       if(!endHadMistake){
 
         unlockAndGive("shield", "🛡️ Schutzschild erhalten!");
@@ -5550,6 +5662,7 @@ function checkEndAnswer(input, korrekt, index){
 }
 
 async function initApp(){
+loadGameSettings();   // 🔥 HIER GANZ OBEN
   await checkUser();           // wichtig!
 
   await hidePremiumModes();
@@ -5614,6 +5727,7 @@ function loadCustomVocabFromStorage(){
 
   console.log("📂 Custom Vokabeln geladen");
 }
+
 document.getElementById("statsBtn").onclick = async function(){
 
   if(!(await isPremium())){
@@ -5621,20 +5735,21 @@ document.getElementById("statsBtn").onclick = async function(){
     return;
   }
 
-showAllStats();
+  const panel = document.getElementById("statsPanel");
+
+  if(panel.style.display === "block"){
+    panel.style.display = "none";
+    this.innerText = "📊 Statistik anzeigen 🔒";
+  } else {
+    showAllStats();
+  }
 };
+
 
 function showAllStats(){
 
   const panel = document.getElementById("statsPanel");
   const btn = document.getElementById("statsBtn");
-
-  // Toggle
-  if(panel.style.display === "block"){
-    panel.style.display = "none";
-    btn.innerText = "📊 Statistik anzeigen 🔒";
-    return;
-  }
 
 const langValue = statsLanguage || document.getElementById("languageSelector").value;
 const lang = langValue.split("-");
@@ -5761,11 +5876,11 @@ entries.sort((a, b) => {
   </div>
 
 <div style="margin-bottom:15px;">
-  <button onclick="setStatsFilter('all')">🌍 Alle</button>
-  <button onclick="setStatsFilter('verbs')">🔤 Verben</button>
-  <button onclick="setStatsFilter('adjectives')">🎨 Adjektive</button>
-  <button onclick="setStatsFilter('nouns')">📦 Nomen</button>
-  <button onclick="setStatsFilter('weak')">🔥 Schwach</button>
+<button id="filter_all" onclick="setStatsFilter('all')">🌍 Alle</button>
+<button id="filter_verbs" onclick="setStatsFilter('verbs')">🔤 Verben</button>
+<button id="filter_adjectives" onclick="setStatsFilter('adjectives')">🎨 Adjektive</button>
+<button id="filter_nouns" onclick="setStatsFilter('nouns')">📦 Nomen</button>
+<button id="filter_weak" onclick="setStatsFilter('weak')">🔥 Schwach</button>
 
   <br><br>
 
@@ -5840,6 +5955,8 @@ ${
   btn.innerText = "❌ Statistik ausblenden";
 
   autoResizeStatsWords();
+updateStatsFilterUI();
+
 const selector = document.getElementById("statsLangSelector");
 
 if(selector){
@@ -5887,6 +6004,22 @@ const lang = statsLanguage
 function setStatsFilter(filter){
   statsFilter = filter;
   showAllStats();
+}
+
+function updateStatsFilterUI(){
+
+  const ids = ["all","verbs","adjectives","nouns","weak"];
+
+  ids.forEach(id => {
+    const btn = document.getElementById("filter_" + id);
+    if(!btn) return;
+
+    if(statsFilter === id){
+      btn.classList.add("stats-filter-active");
+    } else {
+      btn.classList.remove("stats-filter-active");
+    }
+  });
 }
 
 function changeStatsLanguage(){
@@ -6222,6 +6355,7 @@ async function isPremium(){
 
 async function updateUserUI(){
   const el = document.getElementById("userInfo");
+  const statsBtn = document.getElementById("statsBtn"); // 🔥 NEU
 
   if(currentUser){
     const premium = await isPremium();
@@ -6230,8 +6364,20 @@ async function updateUserUI(){
       👤 ${currentUser.email}
       ${premium ? "💎 Premium" : "🆓 Free"}
     `;
+
+    // 🔥 HIER: Button anpassen
+    if(statsBtn){
+      statsBtn.innerText = premium
+        ? "📊 Statistik anzeigen"
+        : "📊 Statistik anzeigen 🔒";
+    }
+
   } else {
     el.innerText = "Nicht eingeloggt";
+
+    if(statsBtn){
+      statsBtn.innerText = "📊 Statistik anzeigen 🔒";
+    }
   }
 }
 
