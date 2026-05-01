@@ -2471,6 +2471,7 @@ leben"></textarea>
 
 <audio id="richtig" src="sound.mp3"></audio>
 <audio id="falsch" src="falsch.mp3"></audio>
+<audio id="tick" src="tick.mp3"></audio>
 
 
 <script>
@@ -3157,6 +3158,7 @@ let lastTimestamp = null; // ⭐ FEHLT
 let isPaused = false
 let aktuelleSprache = "es-de"; // 🔥 NEU
 let gesamtSpielZeit=60, gesamtSekunden=gesamtSpielZeit, gesamtTimerID;
+let lastTickSecond = null;
 let gesamtTimerLaeuft = false;
 // 🧠 SPACED REPETITION SPEICHERN
 function saveLearningData(){
@@ -3579,14 +3581,26 @@ function startGesamtTimer(){
 
   gesamtTimerLaeuft = true;
 
-  gesamtTimerID = setInterval(()=>{
-    if(isPaused) return; // ❗ friert Zeit ein
+gesamtTimerID = setInterval(()=>{
+  if(isPaused) return;
 
-gesamtSekunden--; 
-document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden)
+  gesamtSekunden--; 
 
-if(gesamtSekunden <= 0){
+  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSekunden);
 
+  // 🔥 HIER EINFÜGEN
+  if(gesamtSekunden <= 10 && gesamtSekunden > 0){
+
+    if(lastTickSecond !== gesamtSekunden){
+      playSound("tick");
+      lastTickSecond = gesamtSekunden;
+    }
+
+  } else {
+    lastTickSecond = null;
+  }
+
+  if(gesamtSekunden <= 0){
   clearInterval(timerID);
   clearInterval(gesamtTimerID);
   gesamtTimerLaeuft = false;
@@ -3963,8 +3977,6 @@ let extra = Math.floor(length / 10);
 zeit = Math.min(base + extra, 30);
 aktuelleMaxZeit = zeit;
 
-document.getElementById("feedback").innerText =
-  "⏱ " + Math.round(zeit) + " Sekunden";
     startTimer();
 
   } catch(err){
