@@ -2652,20 +2652,23 @@ const url = SUPABASE_URL +
 }
 
 
-
 async function addHighscoreOnline(name, punkte, timestamp){
 
   try {
 
     const session = await supabaseClient.auth.getSession();
 
-    // 🔥 HIER EINFÜGEN
     console.log("Token:", session?.data?.session?.access_token);
 
     if(!session?.data?.session){
       console.log("❌ Kein gültiger User-Token");
       return;
     }
+
+    // ✅ DEBUG HIER (RICHTIG!)
+    console.log("🧪 DEBUG Name (param):", name);
+    console.log("🧪 DEBUG getCurrentUsername():", getCurrentUsername());
+    console.log("🧪 DEBUG playerName:", playerName);
 
     const res = await fetch(SUPABASE_URL + "/rest/v1/highscores", {
       method: "POST",
@@ -2676,7 +2679,7 @@ async function addHighscoreOnline(name, punkte, timestamp){
         "Prefer": "return=representation"
       },
       body: JSON.stringify({
-        username: getCurrentUsername(),
+        name: getCurrentUsername() || playerName || "Spieler", // 🔥 sicher
         score: punkte,
         time: aktuelleZeit,
         mode: spielModus,
@@ -2695,6 +2698,7 @@ async function addHighscoreOnline(name, punkte, timestamp){
     console.error("❌ Fehler beim Speichern:", err);
   }
 }
+
 function playSound(id){
   const s = document.getElementById(id);
   if(s){
