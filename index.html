@@ -2618,6 +2618,7 @@ loadAchievements();
 
 async function loadHighscoresOnline(zeit, modus, sprache){
 
+const category = document.getElementById("categorySelector").value;
   const group = document.getElementById("groupInput")?.value || "global";
 console.log("🧪 FILTER VALUES:", {
   zeit,
@@ -2626,15 +2627,17 @@ console.log("🧪 FILTER VALUES:", {
   group
 });
 
-  const url = SUPABASE_URL + "/rest/v1/highscores?select=*"
-    + "&time=eq." + zeit
-    + "&mode=eq." + modus
-    + "&language=eq." + sprache
-+ "&group_id=eq.global"
-    + "&order=score.desc,created_at.asc"
-    + "&limit=10";
+const url = SUPABASE_URL + "/rest/v1/highscores?select=*"
+  + "&time=eq." + zeit
+  + "&mode=eq." + modus
+  + "&language=eq." + sprache
+  + "&category=eq." + category   // 🔥 HIER
+  + "&group_id=eq.global"
+  + "&order=score.desc,created_at.asc"
+  + "&limit=10";
 
   console.log("🌐 URL:", url);
+console.log("🧪 CATEGORY:", category);
 
   const res = await fetch(url, {
     headers: {
@@ -2682,15 +2685,17 @@ async function addHighscoreOnline(name, punkte, timestamp){
         "Authorization": "Bearer " + session.data.session.access_token,
         "Prefer": "return=representation"
       },
-      body: JSON.stringify({
-name: (getCurrentUsername() || playerName || "Spieler").trim(),
-        score: punkte,
-        time: aktuelleZeit,
-        mode: spielModus,
-        language: aktuelleSprache,
-group_id: "global",
-        created_at: timestamp
-      })
+
+body: JSON.stringify({
+  name: (getCurrentUsername() || playerName || "Spieler").trim(),
+  score: punkte,
+  time: aktuelleZeit,
+  mode: spielModus,
+  language: aktuelleSprache,
+  category: document.getElementById("categorySelector").value, // 🔥 HIER
+  group_id: document.getElementById("groupInput")?.value || "global",
+  created_at: timestamp
+})
     });
 
     const data = await res.json();
@@ -3303,12 +3308,9 @@ const displayName = e.name || e.username || "Spieler";
     klasse += " me";
   }
 
-  if(isLive){
-    klasse += " new-score";
-  } 
-  else if(displayName === playerName && e.score === lastScore){
-    klasse += " new-score";
-  }
+if(isLive){
+  klasse += " new-score";
+}
 
   let medal = "";
   if(i === 0) medal = "🥇 ";
