@@ -2547,6 +2547,7 @@ leben"></textarea>
 <audio id="richtig" src="sound.mp3"></audio>
 <audio id="falsch" src="falsch.mp3"></audio>
 <audio id="tick" src="tick.mp3"></audio>
+<audio id="cheers" src="cheers.mp3"></audio>
 
 
 <script>
@@ -3246,6 +3247,7 @@ let statsLanguage = null; // 🔥 neu für Statistik-Dropdown
 
 
 let combo = 0;
+let lastRank = null;
 let answerLocked = false;
 let overrideTrainingList = null; // 🔥 NEU
 let inventory = [];
@@ -3414,10 +3416,20 @@ let html = `
   if(!hs || hs.length === 0){
     html += `<div style="text-align:center; opacity:0.7;">Noch keine Einträge</div>`;
   }
+hs.forEach((e, i) => {
 
-hs.forEach((e,i)=>{
+  const displayName = e.name || e.username || "Spieler";
 
-const displayName = e.name || e.username || "Spieler";
+  // 🥇 EPIC EVENT (nur wenn neu auf Platz 1)
+  if(displayName === playerName){
+
+    const currentRank = i + 1;
+
+    if(currentRank === 1 && lastRank !== 1){
+    }
+
+    lastRank = currentRank;
+  }
 
   const isLive = e.created_at === "live";
 
@@ -3436,9 +3448,9 @@ const displayName = e.name || e.username || "Spieler";
     klasse += " me";
   }
 
-if(isLive){
-  klasse += " new-score";
-}
+  if(isLive){
+    klasse += " new-score";
+  }
 
   let medal = "";
   if(i === 0) medal = "🥇 ";
@@ -3451,7 +3463,10 @@ if(isLive){
       ${displayName}: ${e.score}
     </div>
   `;
+
 });
+
+
 
   document.getElementById("highscoreList2").innerHTML = html;
 }
@@ -4597,7 +4612,7 @@ function jubelChoreo(){
 
   let interval = setInterval(konfettiAusRüssel, 300);
 
-playSound("richtig");
+playSound("cheers");
 
 
 
@@ -4808,6 +4823,7 @@ document.getElementById("hintBtn").onclick = function(){
 };
 
 function restartGame(){
+lastRank = null;
 gameEnded = false;
 isSavingScore = false;
   document.getElementById("pauseBtn").style.display = "block"; // 🔥 optional
@@ -5033,6 +5049,8 @@ if(!wiederholModus){
     giveLoot();
   }, 300);
 }
+// 🐘 Jubel nur am Ende
+jubelChoreo();
 
 // 👉 Fokus auf erstes Input setzen
 setTimeout(() => {
@@ -5252,6 +5270,7 @@ customVokabeln = customList;
 }
 
 function startGame(){
+lastRank = null;
 saveGameSettings();   // 🔥 HIER
 scoreSaved = false;
 isSavingScore = false;
@@ -6448,7 +6467,7 @@ document.getElementById("excelBtn").onclick = async function(e){
 </script>
 
 <!-- 🐘 ELEFANT -->
-<img src="elefant.png" id="jubelElefant">
+<img src="jubelelefant.png" id="jubelElefant">
 <div id="elefantGlow"></div>
 
 <div id="footer">
