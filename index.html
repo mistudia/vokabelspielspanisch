@@ -2716,6 +2716,15 @@ function playSound(id){
     s.play().catch(()=>{}); // 🔥 HIER
   }
 }
+
+function stopSound(id){
+  const s = document.getElementById(id);
+  if(s){
+    s.pause();
+    s.currentTime = 0;
+  }
+}
+
 function unlockAchievement(text, type){
 
   const popup = document.createElement("div");
@@ -2815,20 +2824,20 @@ document.getElementById("backBtn").onclick = function(){
 
 document.getElementById("pauseBtn").onclick = function(){
 
-
-
   if(!isPaused){
     // ⏸ Pause
     isPaused = true;
 
     clearInterval(timerID);
 
-state.punkte = Math.max(0, state.punkte - 3);
-updateScoreUI();
+    stopSound("tick");   // 🔥 RICHTIG PLATZIERT
 
-document.getElementById("feedback").innerText = "⏸ Pause (-3 Punkte)";
+    state.punkte = Math.max(0, state.punkte - 3);
+    updateScoreUI();
 
-    document.getElementById("overlay").style.display = "block"; // 🌑 NEU
+    document.getElementById("feedback").innerText = "⏸ Pause (-3 Punkte)";
+
+    document.getElementById("overlay").style.display = "block";
 
     this.innerText = "▶";
 
@@ -2840,7 +2849,7 @@ document.getElementById("feedback").innerText = "⏸ Pause (-3 Punkte)";
 
     document.getElementById("feedback").innerText = "";
 
-    document.getElementById("overlay").style.display = "none"; // 🌑 NEU
+    document.getElementById("overlay").style.display = "none";
 
     this.innerText = "⏸";
   }
@@ -3601,6 +3610,7 @@ gesamtTimerID = setInterval(()=>{
   }
 
   if(gesamtSekunden <= 0){
+  stopSound("tick");   // 🔥 OPTIONAL
   clearInterval(timerID);
   clearInterval(gesamtTimerID);
   gesamtTimerLaeuft = false;
@@ -4750,6 +4760,9 @@ document.getElementById("themeSwitch").addEventListener("change", function(e){
 
 
 function spielBeenden(reason){
+
+  stopSound("tick");      // 🔥 HIER EINFÜGEN
+  lastTickSecond = null;  // optional
 
   if(gameEnded){
     console.log("🚫 Spiel schon beendet:", reason);
