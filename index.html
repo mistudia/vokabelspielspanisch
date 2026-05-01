@@ -3248,6 +3248,7 @@ let statsLanguage = null; // 🔥 neu für Statistik-Dropdown
 
 let combo = 0;
 let lastRank = null;
+let achievedFirstPlace = false; // 🥇 NEU
 let answerLocked = false;
 let overrideTrainingList = null; // 🔥 NEU
 let inventory = [];
@@ -3419,17 +3420,6 @@ let html = `
 hs.forEach((e, i) => {
 
   const displayName = e.name || e.username || "Spieler";
-
-  // 🥇 EPIC EVENT (nur wenn neu auf Platz 1)
-  if(displayName === playerName){
-
-    const currentRank = i + 1;
-
-    if(currentRank === 1 && lastRank !== 1){
-    }
-
-    lastRank = currentRank;
-  }
 
   const isLive = e.created_at === "live";
 
@@ -3710,6 +3700,9 @@ if(r) r.volume = 0.3;
 
 const f = document.getElementById("falsch");
 if(f) f.volume = 0.3;
+
+const c = document.getElementById("cheers");
+if(c) c.volume = 0.2; // 🔉 leiser
 
 function updateLebenAnzeige(){ let str=""; for(let i=0;i<leben;i++) str+="❤️"; document.getElementById("leben").innerHTML=str; }
 
@@ -4763,18 +4756,18 @@ function highlightErrors(lines, errorLines){
 
 function positioniereElefant(){
 
-  const box = document.querySelector(".start-box") 
-           || document.getElementById("gameArea");
-
+  const game = document.getElementById("gameArea");
   const elefant = document.getElementById("jubelElefant");
 
-  if(!box || !elefant) return;
+  if(!game || !elefant) return;
 
-  const rect = box.getBoundingClientRect();
+  const rect = game.getBoundingClientRect();
 
-  // 👉 rechts neben Box
-const x = Math.min(rect.right + 20, window.innerWidth - 220);
-  elefant.style.left = x + "px";
+  // 👉 rechts neben Spiel
+  elefant.style.left = (rect.right + 20) + "px";
+
+  // 👉 vertikal schön mittig im Spielbereich
+  elefant.style.top = (rect.top + rect.height / 2 - 100) + "px";
 }
 
 window.jubelChoreo = jubelChoreo;
@@ -4823,6 +4816,7 @@ document.getElementById("hintBtn").onclick = function(){
 };
 
 function restartGame(){
+achievedFirstPlace = false;
 lastRank = null;
 gameEnded = false;
 isSavingScore = false;
@@ -5049,8 +5043,28 @@ if(!wiederholModus){
     giveLoot();
   }, 300);
 }
-// 🐘 Jubel nur am Ende
-jubelChoreo();
+setTimeout(async () => {
+
+  const hs = await loadHighscoresOnline(
+    aktuelleZeit,
+    spielModus,
+    aktuelleSprache
+  );
+
+  if(hs && hs.length > 0){
+
+    const top = hs[0];
+
+    if(
+      (top.name === playerName || top.username === playerName) &&
+      top.score === state.punkte
+    ){
+      jubelChoreo();
+    }
+  }
+
+}, 300);
+
 
 // 👉 Fokus auf erstes Input setzen
 setTimeout(() => {
@@ -5316,6 +5330,7 @@ customVokabeln = customList;
 }
 
 function startGame(){
+achievedFirstPlace = false;
 lastRank = null;
 saveGameSettings();   // 🔥 HIER
 scoreSaved = false;
