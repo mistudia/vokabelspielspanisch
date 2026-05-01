@@ -3361,6 +3361,20 @@ function getBasisListe(){
   return level2;
 }
 
+function getTrainingBaseList(){
+
+  const category = document.getElementById("categorySelector").value;
+
+  if(category === "verbs") return verbVokabeln;
+  if(category === "adjectives") return adjVokabeln;
+  if(category === "nouns") return nounVokabeln;
+
+  return [
+    ...verbVokabeln,
+    ...adjVokabeln,
+    ...nounVokabeln
+  ];
+}
 
 
 function updateTimerBar(){
@@ -5867,7 +5881,15 @@ function startWeakTraining(){
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-  const allVocab = getFilteredStatsVocab();
+const base = getTrainingBaseList();
+
+const allVocab = base.filter(v =>
+  v &&
+  v[frageLang] &&
+  v[antwortLang] &&
+  v[frageLang].length > 0 &&
+  v[antwortLang].length > 0
+);
 
   const weakList = allVocab.filter(v => {
 
@@ -5904,7 +5926,15 @@ function startWorst20Training(){
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-  const allVocab = getFilteredStatsVocab();
+const base = getTrainingBaseList();
+
+const allVocab = base.filter(v =>
+  v &&
+  v[frageLang] &&
+  v[antwortLang] &&
+  v[frageLang].length > 0 &&
+  v[antwortLang].length > 0
+);
 
   let list = allVocab
     .filter(v => v[frageLang] && v[antwortLang])
