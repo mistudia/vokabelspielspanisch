@@ -5120,29 +5120,40 @@ const category = document.getElementById("categorySelector").value;
 let basisListe;
 
 if(overrideTrainingList){
-  basisListe = overrideTrainingList;   // 🔥 HIER passiert der Fix
+
+  // 👉 WICHTIG: Trainingsliste hat Vorrang
+  basisListe = overrideTrainingList;
+
 } else {
-  basisListe = isCustomMode
-    ? customVokabeln
-    : standardVokabeln;
+
+  if(isCustomMode){
+
+    basisListe = customVokabeln;
+
+  } else {
+
+    const category = document.getElementById("categorySelector").value;
+
+    if(category === "verbs"){
+      basisListe = verbVokabeln;
+    }
+    else if(category === "adjectives"){
+      basisListe = adjVokabeln;
+    }
+    else if(category === "nouns"){
+      basisListe = nounVokabeln;
+    }
+    else { // mixed
+      basisListe = [
+        ...verbVokabeln,
+        ...adjVokabeln,
+        ...nounVokabeln
+      ];
+    }
+
+  }
 }
 
-
-if(category === "adjectives"){
-  basisListe = adjVokabeln;
-}
-
-if(category === "nouns"){
-  basisListe = nounVokabeln;
-}
-
-if(category === "mixed"){
-  basisListe = [
-...verbVokabeln,
-    ...adjVokabeln,
-    ...nounVokabeln
-  ];
-}
 
 // 🔥 CHECK: Gibt es überhaupt passende Vokabeln?
 const validCount = basisListe.filter(v =>
@@ -5849,39 +5860,14 @@ function changeStatsLanguage(){
 
 function startWeakTraining(){
 
-  const lang = (statsLanguage || document.getElementById("languageSelector").value).split("-");
+  const lang = statsLanguage
+    ? statsLanguage.split("-")
+    : document.getElementById("languageSelector").value.split("-");
+
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-  const category = document.getElementById("categorySelector").value;
-
-  let allVocab = [];
-
-  if(category === "verbs"){
-    allVocab = verbVokabeln;
-  }
-  else if(category === "adjectives"){
-    allVocab = adjVokabeln;
-  }
-  else if(category === "nouns"){
-    allVocab = nounVokabeln;
-  }
-  else {
-    allVocab = [
-      ...verbVokabeln,
-      ...adjVokabeln,
-      ...nounVokabeln
-    ];
-  }
-
-  // 🔥 nach Sprache filtern
-  allVocab = allVocab.filter(v =>
-    v &&
-    v[frageLang] &&
-    v[antwortLang] &&
-    v[frageLang].length > 0 &&
-    v[antwortLang].length > 0
-  );
+  const allVocab = getFilteredStatsVocab();
 
   const weakList = allVocab.filter(v => {
 
@@ -5890,7 +5876,7 @@ function startWeakTraining(){
     const key = getVocabKey(v, frageLang, antwortLang);
     const stats = vocabStats[key];
 
-    if(!stats) return true; // ✔ neue = schwach
+    if(!stats) return true; // neue = schwach
 
     const total = stats.correct + stats.wrong;
     if(total === 0) return true;
@@ -5908,14 +5894,17 @@ function startWeakTraining(){
   startCustomTrainingList(weakList);
 }
 
+
 function startWorst20Training(){
 
-  const lang = (statsLanguage || document.getElementById("languageSelector").value).split("-");
+  const lang = statsLanguage
+    ? statsLanguage.split("-")
+    : document.getElementById("languageSelector").value.split("-");
+
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-const allVocab = getFilteredStatsVocab();
-
+  const allVocab = getFilteredStatsVocab();
 
   let list = allVocab
     .filter(v => v[frageLang] && v[antwortLang])
@@ -5945,6 +5934,7 @@ const allVocab = getFilteredStatsVocab();
 
   startCustomTrainingList(worst20);
 }
+
 
 function startCustomTrainingList(list){
 
