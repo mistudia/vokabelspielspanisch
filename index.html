@@ -5137,24 +5137,48 @@ unlockAndGive("crown", "👑 1000 PUNKTE!");
   }
 }
 
+function detectLanguage(word){
+
+  const w = word.toLowerCase().trim();
+
+  // 🇨🇳
+  if(/[\u4e00-\u9fff]/.test(w)){
+    return "zh";
+  }
+
+  // 🇫🇷
+  if(/[éèêàç]/.test(w)){
+    return "fr";
+  }
+
+  // 🇪🇸
+  if(/[áéíóúñ]/.test(w) || w.endsWith("ar") || w.endsWith("er") || w.endsWith("ir")){
+    return "es";
+  }
+
+  // 🇬🇧 (sehr unsicher → markieren!)
+  if(/^[a-z\s]+$/.test(w)){
+    return "unknown"; // 🔥 wichtig
+  }
+
+  // 🇩🇪 fallback
+  return "de";
+}
 
 function parseCustomVocab(){
 
-  const text1 = document.getElementById("inputLang1").value.trim();
-  const text2 = document.getElementById("inputLang2").value.trim();
+  const text1 = document.getElementById("inputLang1").value;
+  const text2 = document.getElementById("inputLang2").value;
 
-  const lang = document.getElementById("languageSelector").value.split("-");
-  const frageLang = lang[0];
-  const antwortLang = lang[1];
-
-  if(!text1 || !text2) return null;
+  const langSetting = document.getElementById("languageSelector").value.split("-");
+  const fallbackLang1 = langSetting[0];
+  const fallbackLang2 = langSetting[1];
 
   const lines1 = text1.split("\n");
   const lines2 = text2.split("\n");
 
   if(lines1.length !== lines2.length){
-    document.getElementById("feedback").innerText =
-      "❌ Anzahl Zeilen stimmt nicht überein";
+    alert("❌ Unterschiedliche Anzahl Zeilen!");
     return null;
   }
 
@@ -5167,20 +5191,42 @@ function parseCustomVocab(){
 
     if(!l1 || !l2) continue;
 
-    customList.push({
-      [frageLang]: l1.split("/"),
-      [antwortLang]: l2.split("/"),
+    let lang1 = detectLanguage(l1);
+    let lang2 = detectLanguage(l2);
+
+    // 🔥 FALLBACK LOGIK
+    if(lang1 === "unknown") lang1 = fallbackLang1;
+    if(lang2 === "unknown") lang2 = fallbackLang2;
+
+    // ❗ Wenn beide gleich → Dropdown erzwingen
+    if(lang1 === lang2){
+      lang1 = fallbackLang1;
+      lang2 = fallbackLang2;
+    }
+
+
+    let obj = {
+      es: [],
+      de: [],
       en: [],
       fr: [],
+      zh: [],
+      pinyin: [],
+      hsk: 1,
       box: 1,
       next: 0
-    });
-  }
+    };
 
-  if(customList.length === 0) return null;
+    obj[lang1] = l1.split("/").map(s => s.trim()).filter(Boolean);
+    obj[lang2] = l2.split("/").map(s => s.trim()).filter(Boolean);
+
+    customList.push(obj);
+  }
 
   return customList;
 }
+
+
 
 function importExcelAndStart(){
 isCustomMode = true; // ❗ Excel = kein Highscore
@@ -5345,25 +5391,43 @@ if(overrideTrainingList){
 }
 
 
-// 🔥 CHECK: Gibt es überhaupt passende Vokabeln?
-const validCount = basisListe.filter(v =>
-  v[frageLang] && v[frageLang].length &&
-  v[antwortLang] && v[antwortLang].length
-).length;
+// 🔥 CUSTOM MODE = IMMER erlauben
+if(isCustomMode){
 
-if(validCount === 0){
-  alert("❌ Diese Sprachkombination funktioniert mit dieser Kategorie nicht!");
-  return;
+  aktuelleListe = basisListe.filter(v =>
+    v &&
+    v[frageLang] &&
+    v[frageLang].length > 0 &&
+    v[antwortLang] &&
+    v[antwortLang].length > 0
+  );
+
+  if(aktuelleListe.length === 0){
+    alert("❌ Deine Vokabeln sind leer oder fehlerhaft!");
+    return;
+  }
+
+} else {
+
+  const validCount = basisListe.filter(v =>
+    v[frageLang] && v[frageLang].length &&
+    v[antwortLang] && v[antwortLang].length
+  ).length;
+
+  if(validCount === 0){
+    alert("❌ Diese Sprachkombination funktioniert mit dieser Kategorie nicht!");
+    return;
+  }
+
+  aktuelleListe = basisListe.filter(v =>
+    v &&
+    v[frageLang] &&
+    v[frageLang].length > 0 &&
+    v[antwortLang] &&
+    v[antwortLang].length > 0
+  );
 }
 
-// 🔥 Liste erstellen
-aktuelleListe = basisListe.filter(v =>
-  v &&
-  v[frageLang] &&
-  v[frageLang].length > 0 &&
-  v[antwortLang] &&
-  v[antwortLang].length > 0
-);
 
 if(aktuelleListe.length === 0){
   alert("❌ Keine gültigen Vokabeln für diese Sprachkombination!");
