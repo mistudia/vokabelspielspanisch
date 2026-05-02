@@ -2291,6 +2291,12 @@ button {
   background: #ffeb3b;
 }
 
+.learn-answer {
+  color: white;
+  font-size: 38px;
+  font-weight: 900;
+}
+
 
 
 
@@ -2313,6 +2319,8 @@ button {
 <h1 id="gameTitle">
   Vokabelspiel&nbsp;MA 🎮
 </h1>
+<div id="startHighscores"></div>
+
 
 <div id="authBox" style="text-align:center; margin-top:20px;">
 
@@ -3364,6 +3372,10 @@ function saveHighscores(hs){
 
 
 async function updateAllHighscores(){
+if(spielModus === "learn"){
+  document.getElementById("highscoreList2").innerHTML = "";
+  return;
+}
 
   // 🔥 HIER EINFÜGEN (GANZ OBEN)
   aktuelleZeit = parseInt(document.getElementById("timeSelector").value);
@@ -3770,6 +3782,9 @@ spielBeenden("time");
 }
 
 async function addHighscore(name, punkte){
+if(spielModus === "learn"){
+  return; // 🔥 kein Speichern im Lernmodus
+}
 
   if(isSavingScore || scoreSaved){
     console.log("🚫 Doppeltes Speichern verhindert");
@@ -3984,19 +3999,15 @@ if(stats){
 
 
 if(spielModus === "learn" && antwortAngezeigt){
-  html = `
-    <div class="wort-box">
+html = `
+  <div class="wort-box">
 
-      <div style="
-        font-size:38px;
-        font-weight:900;
-        color:#00e676;
-      ">
-        ${(w[antwortLang] || []).join(" / ")}
-      </div>
-
+    <div class="learn-answer">
+      ${(w[antwortLang] || []).join(" / ")}
     </div>
-  `;
+
+  </div>
+`;
 }
 
 
@@ -5015,7 +5026,33 @@ html += `
 
 popup.className = "";
 popup.classList.add("popup-end");
-  popup.innerHTML = html;
+
+// 🔥 HIER EINFÜGEN
+html = `
+<div style="position:relative;">
+
+  <button onclick="closeEndPopup()" style="
+    position:absolute;
+    top:-10px;
+    right:-10px;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    background:#ff4444;
+    color:white;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  ">✖</button>
+
+  ${html}
+
+</div>
+`;
+
+// 👇 bleibt wie es ist
+popup.innerHTML = html;
 
   document.getElementById("overlay").style.display = "block";
   popup.style.display = "block";
@@ -5102,6 +5139,7 @@ console.log("Premium bestätigt ✔");
 
 isCustomMode = true; // ✅ zuerst setzen
 
+
 const customList = parseCustomVocab();
 
 if(!customList){
@@ -5121,6 +5159,7 @@ startGame(); // ✅ nur einmal
 document.getElementById("startDefaultBtn").onclick = function(){
 
   isCustomMode = false;
+
 
   document.getElementById("gameTitle").innerText = "Vokabelspiel MA 🎮";
   document.getElementById("feedback").innerText = "🎮 Standard gestartet";
@@ -5339,6 +5378,12 @@ document.getElementById("startItemBook").style.display = "none";
   resetGameState();
 
   spielModus = document.getElementById("modeSelector").value;
+// 🔥 Highscore im Lernmodus ausblenden
+if(spielModus === "learn"){
+  document.getElementById("highscoresContainer").style.display = "none";
+} else {
+  document.getElementById("highscoresContainer").style.display = "block";
+}
 if(currentUser && userProfile){
   playerName = userProfile.username;
 } else {
@@ -5499,22 +5544,30 @@ document.getElementById("modeSelector").addEventListener("change", async functio
 
 
 document.getElementById("timeSelector").addEventListener("change", function(){
-  updateAllHighscores(); // 🔥 NEU
+  updateAllHighscores();
+});
+
+document.getElementById("categorySelector").addEventListener("change", function(){
 });
 
 document.getElementById("languageSelector").addEventListener("change", function(){
 
   updatePinyinVisibility();
+  showPinyin = false;
 
-  showPinyin = false; // 🔥 HIER EINFÜGEN
-
-  updateAllHighscores(); // 🔥 NEU
+  updateAllHighscores();
 
   if(aktuelleVokabel){
     starteFrage();
   }
 
 });
+
+// ✅ HIER EINFÜGEN
+document.getElementById("categorySelector").addEventListener("change", function(){
+  updateAllHighscores();
+});
+
 
 function renderInventory(){
 
@@ -6500,6 +6553,12 @@ document.getElementById("excelBtn").onclick = async function(e){
     return false;
   }
 };
+
+function closeEndPopup(){
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("timeOverPopup").style.display = "none";
+}
+
 
 
 
