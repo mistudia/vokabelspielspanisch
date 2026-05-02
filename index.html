@@ -2838,10 +2838,9 @@ popup.style.opacity = "0";
 popup.style.transition = "all 0.4s ease";
   popup.innerText = text;
   popup.style.position = "fixed";
-const authBox = document.getElementById("authBox");
-const rect = authBox.getBoundingClientRect();
-
-popup.style.top = (rect.bottom + 10) + "px"; // 10px Abstand darunter
+popup.style.top = "100px";
+popup.style.left = "50%";
+popup.style.transform = "translateX(-50%)";
 popup.style.left = "50%";
 popup.style.transform = "translateX(-50%)";
 
@@ -6051,6 +6050,8 @@ entries.sort((a, b) => {
       <option value="de-fr">🇩🇪 → 🇫🇷</option>
       <option value="zh-de">🇨🇳 → 🇩🇪</option>
       <option value="de-zh">🇩🇪 → 🇨🇳</option>
+<option value="pt-de">🇧🇷 → 🇩🇪</option>
+<option value="de-pt">🇩🇪 → 🇧🇷</option>
     </select>
   </div>
 
