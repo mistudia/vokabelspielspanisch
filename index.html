@@ -1247,29 +1247,12 @@ filter: brightness(1.2);
 } 
 
 #jubelElefant {
+  display: none;
   position: fixed;
-  top: -250px;
-  left: 0; /* 🔥 WICHTIG: statt right */
+  left: 900px;
+  top: 180px;
   width: 200px;
   z-index: 10000;
-  transition: all 0.8s cubic-bezier(.2,1.4,.4,1);
-}
-
-.elefant-show {
-  top: 180px !important;
-  transform: rotate(-5deg);
-}
-
-
-@keyframes elefantJump {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(-50px); }
-  60% { transform: translateY(0); }
-  100% { transform: translateY(-20px); }
-}
-
-.elefant-animate {
-  animation: elefantJump 0.6s ease 4;
 }
 
 @keyframes blink {
@@ -1277,27 +1260,7 @@ filter: brightness(1.2);
   95% { transform: scaleY(0.1); }
 }
 
-.elefant-blink {
-  animation: blink 2s infinite;
-  transform-origin: center;
-}
 
-#elefantGlow {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,215,0,0.6), transparent 70%);
-  opacity: 0;
-  z-index: 9999;
-  pointer-events: none;
-  transition: opacity 0.5s;
-}
-
-.glow-active {
-  opacity: 1;
-}
 #inputWrapper {
   position: relative;
   width: 300px;
@@ -4694,32 +4657,21 @@ let x = (Math.random() - 0.5) * 200;
 }
 
 function jubelChoreo(){
-  positioniereElefant(); // 🔥 NEU
 
   const elefant = document.getElementById("jubelElefant");
-  const glow = document.getElementById("elefantGlow");
 
-  elefant.classList.add("elefant-show");
-  glow.classList.add("glow-active");
+  // 👉 anzeigen
+  elefant.style.display = "block";
 
-  setTimeout(()=>{
-    elefant.classList.add("elefant-animate");
-    elefant.classList.add("elefant-blink");
-  }, 200);
-
+  // 👉 Konfetti starten
   let interval = setInterval(konfettiAusRüssel, 300);
 
-playSound("cheers");
+  playSound("cheers");
 
-
-
+  // 👉 nach 4 Sekunden wieder weg
   setTimeout(()=>{
     clearInterval(interval);
-
-    elefant.classList.remove("elefant-show");
-    elefant.classList.remove("elefant-animate");
-    elefant.classList.remove("elefant-blink");
-    glow.classList.remove("glow-active");
+    elefant.style.display = "none";
   }, 4000);
 }
 
@@ -4858,24 +4810,7 @@ function highlightErrors(lines, errorLines){
   layer.innerHTML = html;
 }
 
-function positioniereElefant(){
-
-  const game = document.getElementById("gameArea");
-  const elefant = document.getElementById("jubelElefant");
-
-  if(!game || !elefant) return;
-
-  const rect = game.getBoundingClientRect();
-
-  // 👉 rechts neben Spiel
-  elefant.style.left = (rect.right + 20) + "px";
-
-  // 👉 vertikal schön mittig im Spielbereich
-  elefant.style.top = (rect.top + rect.height / 2 - 100) + "px";
-}
-
 window.jubelChoreo = jubelChoreo;
-window.addEventListener("resize", positioniereElefant);
 
 document.getElementById("checkBtn").onclick = checkTextAntwort;
 
@@ -4920,79 +4855,23 @@ document.getElementById("hintBtn").onclick = function(){
 };
 
 function restartGame(){
-progressStates = [];
-achievedFirstPlace = false;
-lastRank = null;
-gameEnded = false;
-isSavingScore = false;
-  document.getElementById("pauseBtn").style.display = "block"; // 🔥 optional
 
+  // 🔥 wichtig: Status resetten
+  progressStates = [];
+  achievedFirstPlace = false;
+  lastRank = null;
+  gameEnded = false;
+  isSavingScore = false;
 
-  // Spiel sauber resetten
-  resetGameState();
+  document.getElementById("pauseBtn").style.display = "block";
 
-  // UI schließen
+  // 🔥 UI schließen
   document.getElementById("overlay").style.display = "none";
   document.getElementById("timeOverPopup").style.display = "none";
 
-  // Werte zurücksetzen
-state.punkte = 0;
-beantwortet = 0;
-  aktuelleFrage = 0;
-  leben = 3;
-  combo = 0;
-  highscoreSchonVerarbeitet = false;
-
-  falschListe = [];
-  falschDetails = [];
-  wiederholModus = false;
-
-  // Liste neu mischen
-let basisListe = isCustomMode
-  ? customVokabeln
-  : standardVokabeln;
-
-aktuelleListe = [...basisListe];
-  shuffleArray(aktuelleListe);
-
-  // UI reset
-updateScoreUI();
-  document.getElementById("feedback").innerText = "";
-  document.getElementById("gesamtzeit").innerText = formatZeit(gesamtSpielZeit);
-
-  updateLebenAnzeige();
-  updateComboAnzeige();
-
-  // Timer neu setzen (WICHTIG!)
-  gesamtSekunden = gesamtSpielZeit;
-
-  // 👉 Modus anzeigen
-  document.getElementById("feedback").innerText =
-    getModeIcon() + " Neues Spiel gestartet!";
-
-  // Highscores neu laden
-  updateAllHighscores();
-
-  // Spiel starten
-  startGesamtTimer();
-  starteFrage();
+  // 🔥 einfach das normale Startsystem nutzen
+  startGame();
 }
-document.getElementById("themeSwitch").addEventListener("change", function(e){
-
-  const icon = document.getElementById("themeIcon");
-
-  if(e.target.checked){
-    document.body.className = "night";
-    icon.innerText = "🌙";
-    localStorage.setItem("theme", "night");
-  } else {
-    document.body.className = "day";
-    icon.innerText = "☀️";
-    localStorage.setItem("theme", "day");
-  }
-
-});
-
 
 
 function spielBeenden(reason){
@@ -5586,7 +5465,6 @@ document.getElementById("timerWrapper").style.display = "flex";  document.getEle
   document.getElementById("highscoresContainer").style.display = "block";
 
   shuffleArray(aktuelleListe);
-overrideTrainingList = null; // 🔥 zurücksetzen
 renderProgressSteps(aktuelleListe.length);
 
   updateAllHighscores();
@@ -5923,7 +5801,6 @@ if(savedName){
   renderInventory();
   renderItemBook();
   updatePinyinVisibility();
-  positioniereElefant();
   loadCustomVocabFromStorage();
   initVoices();
 
@@ -6270,29 +6147,20 @@ function startWeakTraining(){
 
   const lang = statsLanguage
     ? statsLanguage.split("-")
-    : document.getElementById("languageSelector").value.split("-");
+    : document.getElementById("statsLangSelector").value.split("-");
 
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-const base = getTrainingBaseList();
-
-const allVocab = base.filter(v =>
-  v &&
-  v[frageLang] &&
-  v[antwortLang] &&
-  v[frageLang].length > 0 &&
-  v[antwortLang].length > 0
-);
+  // 🔥 NUR Statistik-Filter verwenden!
+  const allVocab = getFilteredStatsVocab();
 
   const weakList = allVocab.filter(v => {
-
-    if(!v[frageLang] || !v[antwortLang]) return false;
 
     const key = getVocabKey(v, frageLang, antwortLang);
     const stats = vocabStats[key];
 
-    if(!stats) return true; // neue = schwach
+    if(!stats) return true;
 
     const total = stats.correct + stats.wrong;
     if(total === 0) return true;
@@ -6310,40 +6178,29 @@ const allVocab = base.filter(v =>
   startCustomTrainingList(weakList);
 }
 
-
 function startWorst20Training(){
 
   const lang = statsLanguage
     ? statsLanguage.split("-")
-    : document.getElementById("languageSelector").value.split("-");
+    : document.getElementById("statsLangSelector").value.split("-");
 
   const frageLang = lang[0];
   const antwortLang = lang[1];
 
-const base = getTrainingBaseList();
+  // 🔥 NUR Statistik-Filter!
+  const allVocab = getFilteredStatsVocab();
 
-const allVocab = base.filter(v =>
-  v &&
-  v[frageLang] &&
-  v[antwortLang] &&
-  v[frageLang].length > 0 &&
-  v[antwortLang].length > 0
-);
+  let list = allVocab.map(v => {
 
-  let list = allVocab
-    .filter(v => v[frageLang] && v[antwortLang])
-    .map(v => {
+    const key = getVocabKey(v, frageLang, antwortLang);
+    const stats = vocabStats[key] || { correct: 0, wrong: 0 };
 
-      const key = getVocabKey(v, frageLang, antwortLang);
-      const stats = vocabStats[key] || { correct: 0, wrong: 0 };
+    const total = stats.correct + stats.wrong;
+    const quote = total > 0 ? (stats.correct / total) : 0;
 
-      const total = stats.correct + stats.wrong;
-      const quote = total > 0 ? (stats.correct / total) : 0;
+    return { vocab: v, quote, total };
+  });
 
-      return { vocab: v, quote, total };
-    });
-
-  // 🔥 Sortierung: schlechteste zuerst
   list.sort((a, b) => {
     if(a.quote !== b.quote) return a.quote - b.quote;
     return a.total - b.total;
